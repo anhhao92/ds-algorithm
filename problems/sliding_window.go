@@ -2,6 +2,33 @@ package problems
 
 import "math"
 
+// Leetcode 239
+func maxSlidingWindow(nums []int, k int) []int {
+	queue := []int{} // decreasing queue
+	res := []int{}
+
+	for l, r := 0, 0; r < len(nums); r++ {
+		for len(queue) > 0 {
+			index := queue[len(queue)-1]
+			if nums[r] > nums[index] {
+				queue = queue[:len(queue)-1]
+			} else {
+				break
+			}
+		}
+		queue = append(queue, r)
+		if l > queue[0] {
+			queue = queue[1:]
+		}
+
+		if r >= k-1 {
+			res = append(res, nums[queue[0]])
+			l++
+		}
+	}
+	return res
+}
+
 // s = "ADOBECODEBANC", t = "ABC"
 func MinWindow(s string, t string) string {
 	// define table
@@ -90,4 +117,36 @@ func LongestOnes(nums []int, k int) int {
 		r++
 	}
 	return maxLen
+}
+
+func CharacterReplacement(s string, k int) int {
+	maxLen, maxFreq := 0, 0
+	freq := map[byte]int{}
+	for r, l := 0, 0; r < len(s); r++ {
+		freq[s[r]]++
+		maxFreq = max(maxFreq, freq[s[r]])
+		if (r - l + 1 - maxFreq) > k {
+			freq[s[l]]--
+			l++
+		}
+		maxLen = max(maxLen, r-l+1)
+	}
+	return maxLen
+}
+
+// LC 209
+func MinSubArrayLen(target int, nums []int) int {
+	minLength, sum := len(nums), 0
+	for l, r := 0, 0; r < len(nums); r++ {
+		sum += nums[r]
+		for sum >= target {
+			minLength = min(minLength, r-l+1)
+			sum -= nums[l]
+			l++
+		}
+	}
+	if minLength != math.MaxInt32 {
+		return minLength
+	}
+	return 0
 }

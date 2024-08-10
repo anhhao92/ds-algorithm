@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	a := problems.GroupAnagrams([]string{"eat", "tea", "tan", "ate", "nat", "bat"})
+	a := problems.ThreeSumClosest([]int{4, 0, 5, -5, 3, 3, 0, -4, -5}, -2)
 	fmt.Println("=>", a)
 }

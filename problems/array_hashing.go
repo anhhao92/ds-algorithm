@@ -105,3 +105,39 @@ func FrequencySort(s string) string {
 	}
 	return string(res)
 }
+
+// LC238
+func productExceptSelf(nums []int) []int {
+	n := len(nums)
+	prefix, postfix := make([]int, n), make([]int, n)
+	prefix[0], postfix[n-1] = 1, 1
+	for i := 1; i < n; i++ {
+		prefix[i] = prefix[i-1] * nums[i-1]
+	}
+	for i := n - 2; i >= 0; i-- {
+		postfix[i] = postfix[i+1] * nums[i+1]
+	}
+	for i := 0; i < n; i++ {
+		prefix[i] = prefix[i] * postfix[i]
+	}
+	return prefix
+}
+
+// LC128
+func longestConsecutive(nums []int) int {
+	setInt := make(map[int]bool)
+	maxLen := 0
+	for _, v := range nums {
+		setInt[v] = true
+	}
+	for _, v := range nums {
+		if !setInt[v-1] {
+			length := 0
+			for setInt[v+length] {
+				length++
+			}
+			maxLen = max(maxLen, length)
+		}
+	}
+	return maxLen
+}

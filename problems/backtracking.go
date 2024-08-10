@@ -48,35 +48,28 @@ func NewLetterCombinations(digits string) []string {
 }
 
 // Leetcode 22
-type GenerateParenthesis struct {
-	result  []string
-	builder []byte
-}
-
 func NewGenerateParenthesis(n int) []string {
-	instance := GenerateParenthesis{}
-	if n > 0 {
-		instance.dfs(n, 0)
+	result := []string{}
+	temp := make([]byte, 0, n)
+	var backtrack func(open, close int)
+	backtrack = func(open, close int) {
+		if open == n && close == n {
+			result = append(result, string(temp))
+			return
+		}
+		if close < open {
+			temp = append(temp, ')')
+			backtrack(open, close+1)
+			temp = temp[:len(temp)-1]
+		}
+		if open < n {
+			temp = append(temp, '(')
+			backtrack(open+1, close)
+			temp = temp[:len(temp)-1]
+		}
 	}
-	return instance.result
-}
-
-func (p *GenerateParenthesis) dfs(n int, close int) {
-	if n == 0 && close == 0 {
-		p.result = append(p.result, string(p.builder))
-		return
-	}
-	if n > 0 {
-		p.builder = append(p.builder, '(')
-		p.dfs(n-1, close+1)
-		p.builder = p.builder[:len(p.builder)-1]
-	}
-
-	if close > 0 {
-		p.builder = append(p.builder, ')')
-		p.dfs(n, close-1)
-		p.builder = p.builder[:len(p.builder)-1]
-	}
+	backtrack(0, 0)
+	return result
 }
 
 type Permutation struct {

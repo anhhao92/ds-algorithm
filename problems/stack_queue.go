@@ -1,5 +1,7 @@
 package problems
 
+import "strconv"
+
 type Stack[T any] struct {
 	size int
 	val  map[int]T
@@ -77,6 +79,28 @@ func calculate(s string) int {
 		}
 	}
 	return sum
+}
+
+//LC20
+func isValidParentheses(s string) bool {
+	stack := []byte{}
+	closeOpen := map[byte]byte{
+		')': '(',
+		']': '[',
+		'}': '{',
+	}
+	for i := 0; i < len(s); i++ {
+		if v, ok := closeOpen[s[i]]; ok {
+			if len(stack) > 0 && v == stack[len(stack)-1] {
+				stack = stack[:len(stack)-1]
+			} else {
+				return false
+			}
+		} else {
+			stack = append(stack, s[i])
+		}
+	}
+	return len(stack) == 0
 }
 
 func calculateParentheses(s string) int {
@@ -268,4 +292,99 @@ func nextGreaterElements(nums []int) []int {
 		}
 	}
 	return res
+}
+
+/**
+ * Your MinStack object will be instantiated and called as such:
+ * obj := Constructor();
+ * obj.Push(val);
+ * obj.Pop();
+ * param_3 := obj.Top();
+ * param_4 := obj.GetMin();
+ */
+type MinStack struct {
+	data     []int
+	minStack []int
+}
+
+func NewMinStack() MinStack {
+	return MinStack{data: []int{}, minStack: []int{}}
+}
+
+func (this *MinStack) Push(val int) {
+	n := len(this.minStack)
+	if n == 0 || val > this.minStack[n-1] {
+		this.minStack = append(this.minStack, val)
+	} else {
+		topVal := this.minStack[n-1]
+		this.minStack = append(this.minStack, topVal)
+	}
+	this.data = append(this.data, val)
+}
+
+func (this *MinStack) Pop() {
+	n := len(this.data)
+	this.data = this.data[:n-1]
+	this.minStack = this.minStack[:n-1]
+}
+
+func (this *MinStack) Top() int {
+	n := len(this.data)
+	return this.data[n-1]
+}
+
+func (this *MinStack) GetMin() int {
+	n := len(this.data)
+	return this.minStack[n-1]
+}
+
+// LC150
+func evalRPN(tokens []string) int {
+	stack := []int{}
+	for _, v := range tokens {
+		n := len(stack)
+		switch v {
+		case "+":
+			b, a := stack[n-1], stack[n-2]
+			stack[n-2] = a + b
+			stack = stack[:n-1]
+		case "-":
+			b, a := stack[n-1], stack[n-2]
+			stack[n-2] = a - b
+			stack = stack[:n-1]
+		case "*":
+			b, a := stack[n-1], stack[n-2]
+			stack[n-2] = a * b
+			stack = stack[:n-1]
+		case "/":
+			b, a := stack[n-1], stack[n-2]
+			stack[n-2] = a / b
+			stack = stack[:n-1]
+		default:
+			val, _ := strconv.Atoi(v)
+			stack = append(stack, val)
+		}
+	}
+	return stack[0]
+}
+
+//LC84
+func largestRectangleArea(heights []int) int {
+	maxArea := 0
+	stack := [][2]int{}
+	for i, h := range heights {
+		start := i
+		for len(stack) > 0 && stack[len(stack)-1][1] > h {
+			index, height := stack[len(stack)-1][0], stack[len(stack)-1][1]
+			maxArea = max(maxArea, (i-index)*height)
+			start = index
+			stack = stack[:len(stack)-1]
+		}
+		stack = append(stack, [2]int{start, h})
+	}
+	for _, v := range stack {
+		index, height := v[0], v[1]
+		maxArea = max(maxArea, (len(heights)-index)*height)
+	}
+	return maxArea
 }
