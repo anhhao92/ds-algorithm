@@ -1,6 +1,7 @@
 package problems
 
 import (
+	"math"
 	"slices"
 	"strings"
 )
@@ -89,6 +90,23 @@ func setZeroes(matrix [][]int) {
 			matrix[0][j] = 0
 		}
 	}
+}
+
+// LC7
+func reverse(x int) int {
+	result := 0
+	for x != 0 {
+		digit := x % 10
+		if result > math.MaxInt32/10 || result == math.MaxInt32/10 && digit > math.MaxInt32%10 {
+			return 0
+		}
+		if result < math.MinInt32/10 || result == math.MinInt32/10 && digit < math.MinInt32%10 {
+			return 0
+		}
+		result = result*10 + digit
+		x /= 10
+	}
+	return result
 }
 func spiralOrder(matrix [][]int) []int {
 	top, down, left, right := 0, len(matrix), 0, len(matrix[0])

@@ -1,7 +1,6 @@
 package problems
 
 import (
-	"math"
 	"slices"
 	"sort"
 )
@@ -72,56 +71,45 @@ func NewGenerateParenthesis(n int) []string {
 	return result
 }
 
-type Permutation struct {
-	result [][]int
-}
-
-func PermutationArray(nums []int) [][]int {
-	s := Permutation{}
-	s.permute(nums)
-	return s.result
-}
-
-func (s *Permutation) permute(nums []int) [][]int {
-	s.dfs([]int{}, nums)
-	return s.result
-}
-
-func (s *Permutation) dfs(perm []int, comb []int) {
-	if len(comb) == 0 {
-		s.result = append(s.result, perm)
-		return
-	}
-	hash := map[int]bool{} // in case duplication
-	for i := 0; i < len(comb); i++ {
-		if !hash[comb[i]] {
-			hash[comb[i]] = true
-			tempPerm := make([]int, len(perm))
-			tempComb := make([]int, len(comb))
-
-			copy(tempPerm, perm)
-			copy(tempComb, comb)
-
-			tempPerm = append(tempPerm, tempComb[i])
-			tempComb = slices.Delete(tempComb, i, i+1)
-			s.dfs(tempPerm, tempComb)
+// LC46
+func permute(nums []int) [][]int {
+	result := [][]int{}
+	var backtrack func(perms []int, index int)
+	backtrack = func(perms []int, index int) {
+		if index == len(nums) {
+			result = append(result, slices.Clone(nums))
+		}
+		for i := index; i < len(nums); i++ {
+			perms[index], perms[i] = perms[i], perms[index] // swap current with the element at position i
+			backtrack(perms, index+1)
+			perms[index], perms[i] = perms[i], perms[index] // backtracking
 		}
 	}
+	backtrack(nums, 0)
+	return result
 }
 
-func reverse(x int) int {
-	result := 0
-	for x != 0 {
-		digit := x % 10
-		if result > math.MaxInt32/10 || result == math.MaxInt32/10 && digit > math.MaxInt32%10 {
-			return 0
+// LC47
+func permuteUnique(nums []int) [][]int {
+	result := [][]int{}
+	var backtrack func(perms []int, index int)
+	backtrack = func(perms []int, index int) {
+		if index == len(nums) {
+			result = append(result, slices.Clone(perms))
+			return
 		}
-		if result < math.MinInt32/10 || result == math.MinInt32/10 && digit < math.MinInt32%10 {
-			return 0
+		hash := map[int]bool{}
+		for i := index; i < len(nums); i++ {
+			if hash[perms[i]] {
+				continue
+			}
+			hash[perms[i]] = true
+			perms[index], perms[i] = perms[i], perms[index]
+			backtrack(perms, index+1)
+			perms[index], perms[i] = perms[i], perms[index]
 		}
-		result = result*10 + digit
-		x /= 10
 	}
+	backtrack(nums, 0)
 	return result
 }
 
