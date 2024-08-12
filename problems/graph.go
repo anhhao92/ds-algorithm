@@ -3,6 +3,7 @@ package problems
 import (
 	"container/list"
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -40,6 +41,39 @@ func FindConnection(connections []string, name1 string, name2 string) int {
 		}
 		visited[name] = true
 		queue.Remove(node)
+	}
+	return -1
+}
+
+// LC815
+func NumBusesToDestination(routes [][]int, source int, target int) int {
+	busRoutes := make(map[int][]int)
+	for i := 0; i < len(routes); i++ {
+		for _, v := range routes[i] {
+			busRoutes[v] = append(busRoutes[v], i)
+		}
+	}
+	visitedRoutes := make(map[int]bool)
+	visitedBus := make(map[int]bool)
+	queue := [][2]int{{source, 0}} // source, count
+
+	for len(queue) > 0 {
+		queue = queue[1:]
+		src, count := queue[0][0], queue[0][1]
+		if src == target {
+			return count
+		}
+		visitedRoutes[src] = true
+		for _, stop := range busRoutes[src] {
+			if !visitedBus[stop] {
+				visitedBus[stop] = true
+				for _, v := range routes[stop] {
+					if !visitedRoutes[v] {
+						queue = append(queue, [2]int{v, count + 1})
+					}
+				}
+			}
+		}
 	}
 	return -1
 }
@@ -178,11 +212,68 @@ func LadderLength(beginWord string, endWord string, wordList []string) int {
 	return 0
 }
 
-// func FindLadders(beginWord string, endWord string, wordList []string) [][]string {
-// 	count := LadderLength(beginWord, endWord,wordList )
-// 	dfs to find all letters
-// 	return result
-// }
+// LC126
+func FindLadders(beginWord string, endWord string, wordList []string) [][]string {
+	dict := map[string]bool{}
+	queue := []string{beginWord}
+	visitedList := [][]string{}
+	foundWord := false
+	for _, v := range wordList {
+		dict[v] = true
+	}
+	if !dict[endWord] {
+		return [][]string{}
+	}
+	delete(dict, beginWord)
+
+	isWordConnected := func(start, end string) bool {
+		count := 0
+		for i := 0; i < len(start) && count < 2; i++ {
+			if start[i] != end[i] {
+				count++
+			}
+		}
+		return count == 1
+	}
+
+	for len(queue) > 0 && !foundWord {
+		visitedList = append(visitedList, slices.Clone(queue))
+		size := len(queue)
+		for i := 0; i < size && !foundWord; i++ {
+			word := queue[0]
+			queue = queue[1:]
+			for w := range dict {
+				if isWordConnected(word, w) {
+					if w == endWord {
+						foundWord = true
+						break
+					}
+					queue = append(queue, w)
+					delete(dict, w)
+				}
+			}
+		}
+	}
+	if !foundWord {
+		return [][]string{}
+	}
+	result := [][]string{{endWord}}
+	for i := len(visitedList) - 1; i >= 0; i-- {
+		size := len(result)
+		for j := 0; j < size; j++ {
+			ans := result[0]
+			result = result[1:]
+			last := ans[0]
+			for _, word := range visitedList[i] {
+				if isWordConnected(last, word) {
+					result = append(result, append([]string{word}, ans...))
+				}
+			}
+		}
+	}
+
+	return result
+}
 
 func NumIslands(grid [][]byte) int {
 	count := 0

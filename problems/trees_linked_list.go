@@ -12,6 +12,33 @@ type TreeNode struct {
 	Right *TreeNode
 }
 
+// LC98
+func isValidBST(root *TreeNode) bool {
+	prev := 0
+	isInitValue := false
+	var dfs func(cur *TreeNode) bool
+	dfs = func(cur *TreeNode) bool {
+		if cur == nil {
+			return true
+		}
+		left := dfs(cur.Left)
+		if !left {
+			return false
+		}
+		// inorder traversal
+		if !isInitValue {
+			prev = cur.Val
+			isInitValue = true
+		} else if prev >= cur.Val {
+			return false
+		}
+		prev = cur.Val
+		right := dfs(cur.Right)
+		return right
+	}
+	return dfs(root)
+}
+
 // LC 124
 func maxPathSum(root *TreeNode) int {
 	maxVal := root.Val
