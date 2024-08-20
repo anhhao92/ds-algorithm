@@ -1,8 +1,10 @@
 package problems
 
 import (
+	"math"
 	"slices"
 	"strconv"
+	"strings"
 )
 
 func WordBreak(s string, wordDict []string) bool {
@@ -248,6 +250,23 @@ func findTargetSumWays(nums []int, target int) int {
 		}
 	}
 	return dp[target]
+}
+
+// LC474
+func findMaxForm(strs []string, m int, n int) int {
+	dp := make([][]int, m+1)
+	for i := 0; i <= m; i++ {
+		dp[i] = make([]int, n+1)
+	}
+	for _, s := range strs {
+		mCount, nCount := strings.Count(s, "0"), strings.Count(s, "1")
+		for i := m; i >= mCount; i-- {
+			for j := n; j >= nCount; j-- {
+				dp[i][j] = max(1+dp[i-mCount][j-nCount], dp[i][j])
+			}
+		}
+	}
+	return dp[m][n]
 }
 
 // leetcode 120
@@ -510,4 +529,247 @@ func maxProfit(prices []int) int {
 		maxProfitBuyAt[buy] = max(maxProfitBuyAt[buy], maxProfitBuyAt[buy+1])
 	}
 	return maxProfitBuyAt[0]
+}
+
+/*
+LC1049
+  0 1 2 3 4 5 6 7 8 9 10 11
+2 0 0 2 2 2 2 2 2 2 2 2  2
+7 0 0 2 2 2 2 2 7 7 9 9  9
+*/
+
+func LastStoneWeightII(stones []int) int {
+	sum := 0
+	for _, n := range stones {
+		sum += n
+	}
+	half := sum / 2
+	n := len(stones)
+	dp := make([][]int, n+1)
+	for i := range dp {
+		dp[i] = make([]int, half+1)
+	}
+	for i := 1; i <= n; i++ {
+		for s := 1; s <= half; s++ {
+			if stones[i-1] > s {
+				dp[i][s] = dp[i-1][s]
+			} else {
+				dp[i][s] = max(dp[i-1][s], dp[i-1][s-stones[i-1]]+stones[i-1]) // skip or take
+			}
+		}
+	}
+	return sum - 2*dp[n][half]
+}
+
+// LC983
+func mincostTickets(days []int, costs []int) int {
+	n := len(days)
+	dp := make([]int, n+1)
+	cover := []int{1, 7, 30}
+	for i := n - 1; i >= 0; i-- {
+		dp[i] = math.MaxInt32
+		for j, c := range costs {
+			k := i
+			for k < n && days[k] < days[i]+cover[j] {
+				k++
+			}
+			dp[i] = min(dp[i], c+dp[k])
+		}
+	}
+
+	return dp[0]
+	// var dfs func(index int) int
+	// dfs = func(index int) int {
+	// 	if index == -1 {
+	// 		return 0
+	// 	}
+	// 	if dp[index] != 0 {
+	// 		return dp[index]
+	// 	}
+	// 	dp[index] = math.MaxInt32
+	// 	for i, v := range costs {
+	// 		nextIndex := slices.IndexFunc(days, func(e int) bool {
+	// 			return e >= days[index]+cover[i]
+	// 		})
+	// 		dp[index] = min(dp[index], v+dfs(nextIndex))
+	// 	}
+	// 	return dp[index]
+	// }
+}
+
+// LC877
+func stoneGame(piles []int) bool {
+	total := 0
+	n := len(piles)
+	dp := make([][]int, n)
+	for i := range piles {
+		dp[i] = make([]int, n)
+		total += piles[i]
+	}
+	var dfs func(left, right int) int
+	dfs = func(left, right int) int {
+		if left == right {
+			return 0
+		}
+		if dp[left][right] != 0 {
+			return dp[left][right]
+		}
+		takeFirst, takeLast := 0, 0
+		if (right-left+1)%2 == 0 {
+			takeFirst = piles[left]
+			takeLast = piles[right]
+		}
+		dp[left][right] = max(takeFirst+dfs(left+1, right), takeLast+dfs(left, right-1))
+		return dp[left][right]
+	}
+	return dfs(0, n-1) > total/2
+}
+
+// LC64
+func minPathSum(grid [][]int) int {
+	m, n := len(grid), len(grid[0])
+	for i := m - 1; i >= 0; i-- {
+		for j := n - 1; j >= 0; j-- {
+			if i == m-1 && j == n-1 {
+				continue
+			}
+			if i+1 >= m {
+				grid[i][j] += grid[i][j+1]
+			} else if j+1 >= n {
+				grid[i][j] += grid[i+1][j]
+			} else {
+				grid[i][j] += min(grid[i+1][j], grid[i][j+1])
+			}
+		}
+	}
+	return grid[0][0]
+}
+
+// LC1911
+func maxAlternatingSum(nums []int) int64 {
+	// dp := make(map[[2]int]int)
+	// var dfs func(index, sign int) int
+	// dfs = func(index, sign int) int {
+	// 	if index >= len(nums) {
+	// 		return 0
+	// 	}
+	// 	key := [2]int{index, sign}
+	// 	if v, ok := dp[key]; ok {
+	// 		return v
+	// 	}
+	// 	take := sign*nums[index] + dfs(index+1, -1*sign)
+	// 	skip := dfs(index+1, sign)
+	// 	dp[key] = max(take, skip)
+	// 	return dp[key]
+	// }
+	// return int64(dfs(0, 1))
+	sumEven, sumOdd := 0, 0
+	for _, num := range nums {
+		tmpEven := max(sumOdd+num, sumEven) // take even or skip
+		tmpOdd := max(sumEven-num, sumOdd)
+		sumEven, sumOdd = tmpEven, tmpOdd
+	}
+	return int64(sumEven)
+}
+
+// LC1155
+func NumRollsToTarget(n int, k int, target int) int {
+	mod := int(1e9 + 7)
+	dp := make([][]int, n+1)
+	for i := range dp {
+		dp[i] = make([]int, target+1)
+	}
+	dp[0][0] = 1
+	for i := 1; i <= n; i++ {
+		for j := 1; j <= target; j++ {
+			count := 0
+			for t := 1; t <= k; t++ {
+				if j-t >= 0 {
+					count = (count + dp[i-1][j-t]) % mod
+				}
+			}
+			dp[i][j] = count
+		}
+	}
+	return dp[n][target]
+}
+
+// LC576
+func findPaths(m int, n int, maxMove int, startRow int, startColumn int) int {
+	mod := int(1e9 + 7)
+	dp, temp := make([][]int, m), make([][]int, m)
+	for i := range dp {
+		dp[i] = make([]int, n)
+		temp[i] = make([]int, n)
+	}
+	dp[startRow][startColumn] = 1
+	ans := 0
+	for move := 1; move <= maxMove; move++ {
+		for i := 0; i < m; i++ {
+			for j := 0; j < n; j++ {
+				if i == m-1 {
+					ans = (ans + dp[i][j]) % mod
+				}
+				if j == n-1 {
+					ans = (ans + dp[i][j]) % mod
+				}
+				if i == 0 {
+					ans = (ans + dp[i][j]) % mod
+				}
+				if j == 0 {
+					ans = (ans + dp[i][j]) % mod
+				}
+				up, down, left, right := 0, 0, 0, 0
+				if i > 0 {
+					up = dp[i-1][j]
+				}
+				if j > 0 {
+					left = dp[i][j-1]
+				}
+				if i < m-1 {
+					right = dp[i+1][j]
+				}
+				if j < n-1 {
+					down = dp[i][j+1]
+				}
+				temp[i][j] = (up + down + left + right) % mod
+			}
+		}
+		dp, temp = temp, dp
+	}
+	return ans
+}
+
+// LC2370
+func longestIdealString(s string, k int) int {
+	dp := [26]int{}
+	res := 0
+	for i := 0; i < len(s); i++ {
+		current := int(s[i] - 'a')
+		longest := 0
+		for prev := 0; prev < len(dp); prev++ {
+			if int(math.Abs(float64(current-prev))) <= k {
+				longest = max(longest, 1+dp[prev])
+			}
+		}
+		dp[current] = max(longest, dp[current])
+		res = max(res, dp[current])
+
+	}
+	return res
+}
+
+// LC1220
+func countVowelPermutation(n int) int {
+	const MOD = int(1e9 + 7)
+	a, e, i, o, u := 1, 1, 1, 1, 1
+	for j := 1; j < n; j++ {
+		a_next := e
+		e_next := (a + i) % MOD
+		i_next := (a + e + o + u) % MOD
+		o_next := (i + u) % MOD
+		u_next := a
+		a, e, i, o, u = a_next, e_next, i_next, o_next, u_next
+	}
+	return (a + e + i + o + u) % MOD
 }

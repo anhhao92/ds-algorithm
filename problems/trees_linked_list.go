@@ -87,3 +87,115 @@ func deserialize(data string) *TreeNode {
 	}
 	return dfs()
 }
+
+// LC144 [root -> left -> right]
+func PreorderTraversal(root *TreeNode) []int {
+	res := []int{}
+	if root == nil {
+		return res
+	}
+	stack := []*TreeNode{root}
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		res = append(res, current.Val)
+		if current.Right != nil {
+			stack = append(stack, current.Right)
+		}
+		if current.Left != nil {
+			stack = append(stack, current.Left)
+		}
+	}
+	return res
+}
+
+// LC94 [left -> root -> right]
+func InorderTraversal(root *TreeNode) []int {
+	res := []int{}
+	stack := []*TreeNode{}
+	current := root
+	for {
+		for current != nil {
+			stack = append(stack, current)
+			current = current.Left
+		}
+		if len(stack) == 0 {
+			break
+		}
+		current = stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		res = append(res, current.Val)
+		current = current.Right
+	}
+	return res
+}
+
+// LC145 [left -> right -> root]
+func PostorderTraversal(root *TreeNode) []int {
+	res := []int{}
+	stack := []*TreeNode{root}
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		res = append([]int{current.Val}, res...)
+		if current.Left != nil {
+			stack = append(stack, current.Left)
+		}
+		if current.Right != nil {
+			stack = append(stack, current.Right)
+		}
+	}
+	return res
+}
+
+// LC 287 Floyd's cycle detection
+func findDuplicate(nums []int) int {
+	slow, fast := 0, 0
+	slow = nums[slow]
+	fast = nums[nums[fast]]
+	for slow != fast {
+		slow = nums[slow]
+		fast = nums[nums[fast]]
+	}
+	// 2 pointers moving at the same speed
+	slow = 0
+	for slow != fast {
+		slow = nums[slow]
+		fast = nums[fast]
+	}
+	return slow
+}
+
+// LC173
+type BSTIterator struct {
+	stack []*TreeNode
+}
+
+func NewBSTIterator(root *TreeNode) BSTIterator {
+	stack := []*TreeNode{}
+	for root != nil {
+		stack = append(stack, root)
+		root = root.Left
+	}
+	return BSTIterator{stack: stack}
+}
+
+func (this *BSTIterator) Next() int {
+	if len(this.stack) > 0 {
+		current := this.stack[len(this.stack)-1]
+		this.stack = this.stack[:len(this.stack)-1]
+		val := current.Val
+		current = current.Right
+		for current != nil {
+			this.stack = append(this.stack, current)
+			current = current.Left
+		}
+		return val
+	}
+	return 0
+}
+
+func (this *BSTIterator) HasNext() bool {
+	return len(this.stack) > 0
+}

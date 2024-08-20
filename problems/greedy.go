@@ -4,6 +4,45 @@ import (
 	"container/heap"
 )
 
+func maxSubarraySumCircular(nums []int) int {
+	globalMin, globalMax := nums[0], nums[0]
+	curMin, curMax, sum := 0, 0, 0
+	for _, v := range nums {
+		curMax = max(curMax+v, v)
+		curMin = min(curMin+v, v)
+		sum += v
+		globalMax = max(globalMax, curMax)
+		globalMin = min(globalMin, curMin)
+
+	}
+	if globalMax > 0 {
+		return max(globalMax, sum-globalMin)
+	}
+	return globalMax
+}
+func maxTurbulenceSize(arr []int) int {
+	left, right := 0, 1
+	maxLen := 1
+	prev := '*'
+	for right < len(arr) {
+		if arr[right-1] > arr[right] && prev != '>' {
+			maxLen = max(maxLen, right-left+1)
+			right++
+			prev = '>'
+		} else if arr[right-1] < arr[right] && prev != '<' {
+			maxLen = max(maxLen, right-left+1)
+			right++
+			prev = '<'
+		} else {
+			if arr[right-1] == arr[right] {
+				right++
+			}
+			prev = '*'
+			left = right - 1
+		}
+	}
+	return maxLen
+}
 func canCompleteCircuit(gas []int, cost []int) int {
 	sumGas, sumCost := 0, 0
 	for i := 0; i < len(gas); i++ {

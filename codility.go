@@ -271,6 +271,7 @@ func GenerateString(n int) string {
 	res := make([]byte, n)
 	repeat := 1
 	k := 0
+	//var sb strings.Builder
 	if n > 26 {
 		if n%26 == 0 {
 			repeat = n / 26

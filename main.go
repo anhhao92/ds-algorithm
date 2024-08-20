@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	a := problems.FindLadders("hit", "cog", []string{"hot", "dot", "dog", "lot", "log", "cog"})
+	a := problems.NumRollsToTarget(2, 6, 5)
 	fmt.Println("=>", a)
 }

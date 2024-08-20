@@ -4,24 +4,90 @@ import (
 	"math"
 )
 
-func subarraySum(nums []int, k int) int {
+// LC303
+type NumArray struct {
+	prefixSum []int
+}
+
+/**
+ * Your NumArray object will be instantiated and called as such:
+ * obj := Constructor(nums);
+ * param_1 := obj.SumRange(left,right);
+ */
+
+func NewNumArray(nums []int) NumArray {
 	prefixSum := make([]int, len(nums))
-	hs := map[int]int{}
-	count := 0
 	prefixSum[0] = nums[0]
 	for i := 1; i < len(nums); i++ {
 		prefixSum[i] = prefixSum[i-1] + nums[i]
 	}
-	for _, prefix := range prefixSum {
-		if prefix == k {
-			count++
+	return NumArray{prefixSum: prefixSum}
+}
+
+func (this *NumArray) SumRange(left int, right int) int {
+	if left > 0 {
+		return this.prefixSum[right] - this.prefixSum[left-1]
+	}
+	return this.prefixSum[right]
+}
+
+// LC304
+type NumMatrix struct {
+	prefixSum [][]int
+}
+
+func NewNumMatrix(matrix [][]int) NumMatrix {
+	row, col := len(matrix), len(matrix[0])
+	prefixSum := make([][]int, row+1)
+	for i := range prefixSum {
+		prefixSum[i] = make([]int, col+1)
+	}
+	for i := 0; i < row; i++ {
+		prefix := 0
+		for j := 0; j < col; j++ {
+			prefix += matrix[i][j]
+			prefixSum[i+1][j+1] = prefix + prefixSum[i][j+1]
 		}
-		if hs[prefix-k] != 0 {
-			count += hs[prefix-k]
+	}
+	return NumMatrix{prefixSum: prefixSum}
+}
+
+func (this *NumMatrix) SumRegion(row1 int, col1 int, row2 int, col2 int) int {
+	bottomRight := this.prefixSum[row2+1][col2+1]
+	above := this.prefixSum[row1][col2+1]
+	left := this.prefixSum[row2+1][col1]
+	topLeft := this.prefixSum[row1][col1]
+	return bottomRight - above - left + topLeft
+}
+
+// LC560
+func SubarraySum(nums []int, k int) int {
+	curSum, count := 0, 0
+	hs := map[int]int{0: 1}
+	for _, val := range nums {
+		curSum += val
+		if hs[curSum-k] > 0 {
+			count += hs[curSum-k]
 		}
-		hs[prefix]++
+		hs[curSum]++
 	}
 	return count
+}
+
+// LC724
+func findPivotIndex(nums []int) int {
+	leftSum, total := 0, 0
+	for _, v := range nums {
+		total += v
+	}
+	for i, num := range nums {
+		rightSum := total - num - leftSum
+		if rightSum == leftSum {
+			return i
+		}
+		leftSum += num
+	}
+	return -1
 }
 func LongestEvenSubsequence(nums []int) int {
 	minOdd, maxOdd, minEven, maxEven := math.MaxInt32, math.MinInt32, math.MaxInt32, math.MinInt32
@@ -107,20 +173,19 @@ func FrequencySort(s string) string {
 }
 
 // LC238
-func productExceptSelf(nums []int) []int {
+func ProductExceptSelf(nums []int) []int {
 	n := len(nums)
-	prefix, postfix := make([]int, n), make([]int, n)
-	prefix[0], postfix[n-1] = 1, 1
+	result := make([]int, n)
+	result[0] = 1
 	for i := 1; i < n; i++ {
-		prefix[i] = prefix[i-1] * nums[i-1]
+		result[i] = result[i-1] * nums[i-1]
 	}
-	for i := n - 2; i >= 0; i-- {
-		postfix[i] = postfix[i+1] * nums[i+1]
+	postfix := 1
+	for i := n - 1; i >= 0; i-- {
+		result[i] *= postfix
+		postfix *= nums[i]
 	}
-	for i := 0; i < n; i++ {
-		prefix[i] = prefix[i] * postfix[i]
-	}
-	return prefix
+	return result
 }
 
 // LC128
