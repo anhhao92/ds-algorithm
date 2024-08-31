@@ -3,6 +3,8 @@ package problems
 import (
 	"slices"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 type LetterCombinations struct {
@@ -71,8 +73,27 @@ func NewGenerateParenthesis(n int) []string {
 	return result
 }
 
+// LC 77
+func Combination(n int, k int) [][]int {
+	res := [][]int{}
+	var backtrack func(combination []int, index int)
+	backtrack = func(combination []int, index int) {
+		if len(combination) == k {
+			res = append(res, slices.Clone(combination)) // have to clone it
+			return
+		}
+		for i := index; i <= n; i++ {
+			combination = append(combination, i)
+			backtrack(combination, i+1)
+			combination = combination[:len(combination)-1]
+		}
+	}
+	backtrack([]int{}, 1)
+	return res
+}
+
 // LC46
-func permute(nums []int) [][]int {
+func Permuatation(nums []int) [][]int {
 	result := [][]int{}
 	var backtrack func(perms []int, index int)
 	backtrack = func(perms []int, index int) {
@@ -90,7 +111,7 @@ func permute(nums []int) [][]int {
 }
 
 // LC47
-func permuteUnique(nums []int) [][]int {
+func PermuteUnique(nums []int) [][]int {
 	result := [][]int{}
 	var backtrack func(perms []int, index int)
 	backtrack = func(perms []int, index int) {
@@ -111,6 +132,54 @@ func permuteUnique(nums []int) [][]int {
 	}
 	backtrack(nums, 0)
 	return result
+}
+
+// LC 241
+func DiffWaysToCompute(expression string) []int {
+	res := []int{}
+	for i := 0; i < len(expression); i++ {
+		if expression[i] == '+' || expression[i] == '-' || expression[i] == '*' {
+			n1 := DiffWaysToCompute(expression[:i])
+			n2 := DiffWaysToCompute(expression[i+1:])
+			for _, v1 := range n1 {
+				for _, v2 := range n2 {
+					switch expression[i] {
+					case '+':
+						res = append(res, v1+v2)
+					case '-':
+						res = append(res, v1-v2)
+					case '*':
+						res = append(res, v1*v2)
+					}
+				}
+			}
+		}
+	}
+	if len(res) == 0 {
+		n, _ := strconv.Atoi(expression)
+		res = append(res, n)
+	}
+	return res
+}
+
+// LC 386
+func lexicalOrder(n int) []int {
+	res := []int{}
+	var dfs func(num int)
+	dfs = func(num int) {
+		if num > n {
+			return
+		}
+		res = append(res, num)
+		num = num * 10
+		for i := 0; i < 10; i++ {
+			dfs(i + num)
+		}
+	}
+	for i := 1; i < 10; i++ {
+		dfs(i)
+	}
+	return res
 }
 
 func SolveNQueens(n int) [][]string {
@@ -329,63 +398,6 @@ func dfsWordSearch(r, c, index int, board [][]byte, visited [][]bool, word strin
 	return false
 }
 
-type TrieNode struct {
-	children map[byte]*TrieNode
-	isWord   bool
-}
-
-func FindWords(board [][]byte, words []string) []string {
-	result := []string{}
-	row, col := len(board), len(board[0])
-	visited := make([][]bool, row)
-	root := &TrieNode{children: make(map[byte]*TrieNode)}
-	for i := 0; i < row; i++ {
-		visited[i] = make([]bool, col)
-	}
-	for _, w := range words {
-		curNode := root
-		for i := 0; i < len(w); i++ {
-			char := w[i]
-			if curNode.children[char] == nil {
-				curNode.children[char] = &TrieNode{children: make(map[byte]*TrieNode)}
-			}
-			curNode = curNode.children[char]
-		}
-		curNode.isWord = true
-	}
-	var dfs func(r, c int, trie *TrieNode, word []byte)
-	dfs = func(r, c int, trie *TrieNode, word []byte) {
-		if r < 0 || c < 0 || r >= row || c >= col || visited[r][c] {
-			return
-		}
-		visited[r][c] = true
-		char := board[r][c]
-		curTrie := trie.children[char]
-		if curTrie == nil {
-			visited[r][c] = false
-			return
-		}
-		word = append(word, char)
-		if curTrie.isWord {
-			result = append(result, string(word))
-			curTrie.isWord = false
-		}
-		directions := [][]int{{0, 1}, {1, 0}, {0, -1}, {-1, 0}}
-		for _, d := range directions {
-			dr, dc := r+d[0], c+d[1]
-			dfs(dr, dc, curTrie, word)
-		}
-		visited[r][c] = false
-	}
-	// traverse cells
-	for i := 0; i < row; i++ {
-		for j := 0; j < col; j++ {
-			dfs(i, j, root, []byte{})
-		}
-	}
-	return result
-}
-
 func combinationSum2(candidates []int, target int) [][]int {
 	result := [][]int{}
 	slices.Sort(candidates)
@@ -447,6 +459,7 @@ func subsets(nums []int) [][]int {
 	dfs([]int{}, 0)
 	return result
 }
+
 func subsetsWithDup(nums []int) [][]int {
 	result := [][]int{}
 	slices.Sort(nums)
@@ -464,4 +477,220 @@ func subsetsWithDup(nums []int) [][]int {
 	}
 	dfs([]int{}, 0)
 	return result
+}
+
+// LC 93
+func RestoreIpAddresses(s string) []string {
+	res := []string{}
+	isValid := func(str string) bool {
+		if len(str) > 1 && strings.HasPrefix(str, "0") {
+			return false
+		}
+		num, _ := strconv.Atoi(str)
+		return num >= 0 && num <= 255
+	}
+	var backtrack func(index int, addr []string)
+	backtrack = func(index int, addr []string) {
+		if index == len(s) && len(addr) == 4 {
+			res = append(res, strings.Join(addr, "."))
+			return
+		}
+		if len(addr) > 4 {
+			return
+		}
+		for i := index + 1; i <= min(index+3, len(s)); i++ {
+			subStr := s[index:i]
+			if isValid(subStr) {
+				addr = append(addr, subStr)
+				backtrack(i, addr)
+				addr = addr[:len(addr)-1]
+			}
+		}
+	}
+	backtrack(0, []string{})
+	return res
+}
+
+// LC 1849
+func splitStringDescendingConsecutiveValues(s string) bool {
+	var backtrack func(index, prev int) bool
+	backtrack = func(index, prev int) bool {
+		if index == len(s) {
+			return true
+		}
+		for i := index + 1; i <= len(s); i++ {
+			subStr := s[index:i]
+			val, _ := strconv.Atoi(subStr)
+			if val+1 == prev && backtrack(i, val) {
+				return true
+			}
+		}
+		return false
+	}
+	for i := 0; i < len(s)-1; i++ {
+		val := s[:i+1]
+		prev, _ := strconv.Atoi(val)
+		if backtrack(i+1, prev) {
+			return true
+		}
+	}
+	return false
+}
+
+// LC 1980
+func findDifferentBinaryString(nums []string) string {
+	hashSet := map[string]bool{}
+	for _, v := range nums {
+		hashSet[v] = true
+	}
+	s := make([]byte, len(nums))
+	for i := 0; i < len(nums); i++ {
+		s[i] = '0'
+	}
+	var backtrack func(index int) string
+	backtrack = func(index int) string {
+		if index == len(nums) {
+			res := string(s)
+			if !hashSet[res] {
+				return res
+			}
+			return ""
+		}
+		// try 0
+		res := backtrack(index + 1)
+		if res != "" {
+			return res
+		}
+		// try 1
+		s[index] = '1'
+		return backtrack(index + 1)
+	}
+	return backtrack(0)
+}
+
+// LC 473
+func MakeSquare(matchsticks []int) bool {
+	length := 0
+	for _, v := range matchsticks {
+		length += v
+	}
+	if length%4 != 0 {
+		return false
+	}
+	length /= 4
+	slices.SortFunc(matchsticks, func(a, b int) int {
+		return b - a
+	})
+	sticks := make([]int, 4)
+	var backtrack func(index int) bool
+	backtrack = func(index int) bool {
+		if index == len(matchsticks) {
+			return true
+		}
+		for i := 0; i < 4; i++ {
+			// avoid duplicated works
+			if matchsticks[index]+sticks[i] > length || i > 0 && sticks[i] == sticks[i-1] {
+				continue
+			}
+			if sticks[i]+matchsticks[index] <= length {
+				sticks[i] += matchsticks[index]
+				if backtrack(index + 1) {
+					return true
+				}
+				sticks[i] -= matchsticks[index]
+			}
+			// 2nd optimization
+			if sticks[i] == 0 {
+				return false
+			}
+		}
+		return false
+	}
+	return backtrack(0)
+}
+
+// LC 698
+func CanPartitionKSubsets(nums []int, k int) bool {
+	sum := 0
+	for _, v := range nums {
+		sum += v
+	}
+	if sum%k != 0 {
+		return false
+	}
+	sum /= k
+	subSet := make([]int, k)
+	// reverse order
+	slices.SortFunc(nums, func(a, b int) int {
+		return b - a
+	})
+	var backtrack func(index int) bool
+	backtrack = func(index int) bool {
+		if index == len(nums) {
+			return true
+		}
+		for i := 0; i < k; i++ {
+			// 1st optimization
+			// we traversed subSet[i-1] not the answer so skip identical subSet[i]
+			if nums[index]+subSet[i] > sum || i > 0 && subSet[i] == subSet[i-1] {
+				continue
+			}
+			if subSet[i]+nums[index] <= sum {
+				subSet[i] += nums[index]
+				if backtrack(index + 1) {
+					return true
+				}
+				subSet[i] -= nums[index]
+			}
+			// 2nd optimization
+			if subSet[i] == 0 {
+				return false
+			}
+		}
+		return false
+	}
+	return backtrack(0)
+}
+
+// LC 1255
+func maxScoreWords(words []string, letters []byte, score []int) int {
+	var countLetter [26]int
+	var res = 0
+	for _, c := range letters {
+		countLetter[c-'a']++
+	}
+	canFormWord := func(usedLetters [26]int) bool {
+		for i := range usedLetters {
+			if usedLetters[i] > countLetter[i] {
+				return false
+			}
+		}
+		return true
+	}
+	var backtrack func(index int, usedLetters [26]int)
+	backtrack = func(index int, usedLetters [26]int) {
+		if index == len(words) {
+			s := 0
+			for i, v := range usedLetters {
+				s += v * score[i]
+			}
+			res = max(res, s)
+			return
+		}
+		// skip
+		backtrack(index+1, usedLetters)
+		// take
+		word := words[index]
+		for i := 0; i < len(word); i++ {
+			usedLetters[word[i]-'a']++
+		}
+		if canFormWord(usedLetters) {
+			backtrack(index+1, usedLetters)
+		}
+		for i := 0; i < len(word); i++ {
+			usedLetters[word[i]-'a']--
+		}
+	}
+	backtrack(0, [26]int{})
+	return res
 }

@@ -1,6 +1,9 @@
-package problems
+package main
 
-import "testing"
+import (
+	"leetcode/problems"
+	"testing"
+)
 
 func TestMinWindow(t *testing.T) {
 	type args struct {
@@ -17,7 +20,7 @@ func TestMinWindow(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := MinWindow(tt.args.s, tt.args.t); got != tt.want {
+			if got := problems.MinWindow(tt.args.s, tt.args.t); got != tt.want {
 				t.Errorf("MinWindow() = %v, want %v", got, tt.want)
 			}
 		})
@@ -40,9 +43,31 @@ func TestCheckInclusion(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := CheckInclusion(tt.args.s1, tt.args.s2); got != tt.want {
+			if got := problems.CheckInclusion(tt.args.s1, tt.args.s2); got != tt.want {
 				t.Errorf("CheckInclusion() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+func TestSortColors(t *testing.T) {
+	type args struct {
+		nums []int
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "Test 1",
+			args: args{
+				nums: []int{2, 0, 2, 1, 1, 0},
+			},
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			problems.SortColors(tt.args.nums)
 		})
 	}
 }

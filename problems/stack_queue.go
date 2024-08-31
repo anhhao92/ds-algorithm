@@ -1,6 +1,9 @@
 package problems
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
 type Stack[T any] struct {
 	size int
@@ -81,7 +84,7 @@ func calculate(s string) int {
 	return sum
 }
 
-//LC20
+// LC20
 func isValidParentheses(s string) bool {
 	stack := []byte{}
 	closeOpen := map[byte]byte{
@@ -368,7 +371,7 @@ func evalRPN(tokens []string) int {
 	return stack[0]
 }
 
-//LC84
+// LC84
 func largestRectangleArea(heights []int) int {
 	maxArea := 0
 	stack := [][2]int{}
@@ -387,4 +390,198 @@ func largestRectangleArea(heights []int) int {
 		maxArea = max(maxArea, (len(heights)-index)*height)
 	}
 	return maxArea
+}
+
+// LC 2390
+func removeStars(s string) string {
+	stack := make([]byte, 0, len(s))
+	for i := 0; i < len(s); i++ {
+		if s[i] == '*' {
+			stack = stack[:len(stack)-1]
+		} else {
+			stack = append(stack, s[i])
+		}
+	}
+	return string(stack)
+}
+
+// LC 946
+func validateStackSequences(pushed []int, popped []int) bool {
+	i := 0
+	stack := []int{}
+	for _, v := range pushed {
+		stack = append(stack, v)
+		for i < len(popped) && len(stack) > 0 && stack[len(stack)-1] == popped[i] {
+			stack = stack[:len(stack)-1]
+			i++
+		}
+	}
+	return len(stack) == 0
+}
+
+// LC907
+func sumSubarrayMins(arr []int) int {
+	const MOD = int(1e9 + 7)
+	total, n := 0, len(arr)
+	stack := []int{}
+	for i := 0; i < n; i++ {
+		for len(stack) > 0 && arr[i] < arr[stack[len(stack)-1]] {
+			j := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+			left := j + 1
+			if len(stack) > 0 {
+				left = j - stack[len(stack)-1]
+			}
+			right := i - j
+			total += arr[j] * right * left
+		}
+		stack = append(stack, i)
+	}
+	for i, j := range stack {
+		left := j + 1
+		if i > 0 {
+			left = j - stack[i-1]
+		}
+		right := n - j
+		total += arr[j] * right * left
+
+	}
+	return total % MOD
+}
+
+// LC1209
+func removeAllAdjacentDuplicates(s string, k int) string {
+	stack := [][2]int{} // [character, count]
+	res := []byte{}
+	for i := 0; i < len(s); i++ {
+		n := len(stack)
+		if n > 0 && byte(stack[n-1][0]) == s[i] {
+			stack[n-1][1]++
+			if stack[n-1][1] == k {
+				stack = stack[:n-1]
+			}
+		} else {
+			stack = append(stack, [2]int{int(s[i]), 1})
+		}
+	}
+	for _, v := range stack {
+		ch, cnt := byte(v[0]), v[1]
+		for i := 0; i < cnt; i++ {
+			res = append(res, ch)
+		}
+	}
+	return string(res)
+}
+
+// LC 402 monotonic stack
+func removeKdigits(num string, k int) string {
+	stack := []byte{}
+	for i := 0; i < len(num); i++ {
+		for len(stack) > 0 && k > 0 && stack[len(stack)-1] > num[i] {
+			stack = stack[:len(stack)-1]
+			k--
+		}
+		stack = append(stack, num[i])
+	}
+	stack = stack[:len(stack)-k]
+	for len(stack) > 0 && stack[0] == byte('0') {
+		stack = stack[1:]
+	}
+	if len(stack) == 0 {
+		return "0"
+	}
+	return string(stack)
+}
+
+// LC456
+func find132pattern(nums []int) bool {
+	stack := [][2]int{} // [num, minLeft]
+	currentMin := nums[0]
+	for i := 1; i < len(nums); i++ {
+		for len(stack) > 0 && nums[i] >= stack[len(stack)-1][0] {
+			stack = stack[:len(stack)-1]
+		}
+		if len(stack) > 0 && nums[i] > stack[len(stack)-1][1] {
+			return true
+		}
+		stack = append(stack, [2]int{nums[i], currentMin})
+		currentMin = min(currentMin, nums[i])
+	}
+	return false
+}
+
+// LC 394
+func decodeString(s string) string {
+	numStack := []int{}
+	strStack := []string{}
+	curNum, curStr := "", ""
+	for i := 0; i < len(s); i++ {
+		if s[i] >= '0' && s[i] <= '9' {
+			curNum += string(s[i])
+		} else if s[i] == '[' {
+			num, _ := strconv.Atoi(curNum)
+			numStack = append(numStack, num)
+			strStack = append(strStack, curStr)
+			curNum, curStr = "", ""
+		} else if s[i] == ']' {
+			curStr = strStack[len(strStack)-1] + strings.Repeat(curStr, numStack[len(numStack)-1])
+			strStack = strStack[:len(strStack)-1]
+			numStack = numStack[:len(numStack)-1]
+		} else {
+			curStr += string(s[i])
+		}
+	}
+	return curStr
+}
+
+// LC71
+func SimplifyPath(path string) string {
+	stack := []string{}
+	paths := strings.Split(path, "/")
+	for _, current := range paths {
+		if current == "." || current == "" {
+			continue
+		}
+		if current == ".." {
+			if len(stack) > 0 {
+				stack = stack[:len(stack)-1]
+			}
+		} else {
+			stack = append(stack, current)
+		}
+	}
+	return "/" + strings.Join(stack, "/")
+}
+
+// LC895
+type FreqStack struct {
+	freqMap map[int]int
+	bucket  map[int][]int
+	maxFreq int
+}
+
+func NewFreqStack() FreqStack {
+	return FreqStack{
+		freqMap: make(map[int]int),
+		bucket:  map[int][]int{},
+		maxFreq: 1,
+	}
+}
+
+func (this *FreqStack) Push(val int) {
+	this.freqMap[val]++
+	this.maxFreq = max(this.maxFreq, this.freqMap[val])
+	this.bucket[this.freqMap[val]] = append(this.bucket[this.freqMap[val]], val)
+}
+
+func (this *FreqStack) Pop() int {
+	current := this.bucket[this.maxFreq]
+	val := current[len(current)-1]
+	current = current[:len(current)-1]
+	this.bucket[this.maxFreq] = current
+	if len(current) == 0 {
+		this.maxFreq--
+	}
+	this.freqMap[val]--
+	return val
 }

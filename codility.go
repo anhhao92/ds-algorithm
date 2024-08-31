@@ -57,23 +57,17 @@ func MinLengthFixedBoard(nums []int) int {
 }
 
 func minimumDeletions(s string) int {
-	a, b, n := 0, 0, len(s)
-	result := math.MaxInt32
-	for i := 0; i < n; i++ {
-		if s[i] == 'a' {
-			a++
+	count := 0
+	stack := []byte{s[0]}
+	for i := 1; i < len(s); i++ {
+		if len(stack) > 0 && stack[len(stack)-1] == 'b' && s[i] == 'a' {
+			stack = stack[:len(stack)-1]
+			count++
+		} else {
+			stack = append(stack, s[i])
 		}
 	}
-	for i := 0; i < n; i++ {
-		if s[i] == 'b' {
-			b++
-		}
-		if s[i] == 'a' {
-			a--
-		}
-		result = min(result, a+b)
-	}
-	return result
+	return count
 }
 
 func countCarPassingSpeedCam(s string) int {
@@ -270,18 +264,16 @@ func CountBattleShip(b []string) []int {
 func GenerateString(n int) string {
 	res := make([]byte, n)
 	repeat := 1
-	k := 0
-	//var sb strings.Builder
 	if n > 26 {
 		if n%26 == 0 {
 			repeat = n / 26
 		} else if n%2 == 0 {
-			repeat = 1 + n/26
+			repeat = repeat + n/26
 		} else {
 			repeat = n
 		}
 	}
-	for i := byte('a'); i <= byte('z') && k < n; i++ {
+	for i, k := byte('a'), 0; i <= byte('z') && k < n; i++ {
 		for j := 0; j < repeat; j++ {
 			res[k] = i
 			k++

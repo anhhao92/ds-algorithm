@@ -2,6 +2,7 @@ package problems
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -10,6 +11,7 @@ type TreeNode struct {
 	Val   int
 	Left  *TreeNode
 	Right *TreeNode
+	Next  *TreeNode
 }
 
 // LC98
@@ -149,22 +151,62 @@ func PostorderTraversal(root *TreeNode) []int {
 	return res
 }
 
-// LC 287 Floyd's cycle detection
-func findDuplicate(nums []int) int {
-	slow, fast := 0, 0
-	slow = nums[slow]
-	fast = nums[nums[fast]]
-	for slow != fast {
-		slow = nums[slow]
-		fast = nums[nums[fast]]
+// LC 116/117
+func connectNextRightToEachNode(root *TreeNode) *TreeNode {
+	if root == nil {
+		return root
 	}
-	// 2 pointers moving at the same speed
-	slow = 0
-	for slow != fast {
-		slow = nums[slow]
-		fast = nums[fast]
+	queue := []*TreeNode{root}
+	for len(queue) > 0 {
+		// pre will be reset to nil after completed each level
+		var pre *TreeNode
+		var size = len(queue)
+		for i := 0; i < size; i++ {
+			current := queue[i]
+			if pre != nil {
+				pre.Next = current
+			}
+			pre = current
+			if current.Left != nil {
+				queue = append(queue, current.Left)
+			}
+			if current.Right != nil {
+				queue = append(queue, current.Right)
+			}
+		}
+		queue = queue[size:]
 	}
-	return slow
+	return root
+}
+
+// LC 103
+func zigzagLevelOrder(root *TreeNode) [][]int {
+	res := [][]int{}
+	if root == nil {
+		return res
+	}
+	queue := []*TreeNode{root}
+	isLeftToRight := true
+	for len(queue) > 0 {
+		var size = len(queue)
+		values := []int{}
+		for _, current := range queue {
+			values = append(values, current.Val)
+			if current.Left != nil {
+				queue = append(queue, current.Left)
+			}
+			if current.Right != nil {
+				queue = append(queue, current.Right)
+			}
+		}
+		if !isLeftToRight {
+			slices.Reverse(values)
+		}
+		queue = queue[size:]
+		res = append(res, values)
+		isLeftToRight = !isLeftToRight
+	}
+	return res
 }
 
 // LC173

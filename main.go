@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	a := problems.NumRollsToTarget(2, 6, 5)
+	a := problems.FindSubstring("lingmindraboofooowingdingbarrwingmonkeypoundcake", []string{"fooo", "barr", "wing", "ding", "wing"})
 	fmt.Println("=>", a)
 }

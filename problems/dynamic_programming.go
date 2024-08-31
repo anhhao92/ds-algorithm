@@ -7,33 +7,48 @@ import (
 	"strings"
 )
 
+const MOD = int(1e9 + 7)
+
+// 139
 func WordBreak(s string, wordDict []string) bool {
+	length := len(s)
+	dp := make([]bool, length+1)
+	dp[length] = true
+	for i := length - 1; i >= 0; i-- {
+		for _, w := range wordDict {
+			if i+len(w) <= length && dp[i+len(w)] && s[i:i+len(w)] == w {
+				dp[i] = true
+				break
+			}
+		}
+	}
+	return dp[0]
+}
+
+// 140
+func WordBreakII(s string, wordDict []string) []string {
+	n := len(s)
 	dict := map[string]bool{}
-	cache := map[string]bool{}
+	dp := make([][]string, n+1)
+	dp[0] = []string{""}
+
 	for _, v := range wordDict {
 		dict[v] = true
 	}
-	return dfs(s, dict, cache)
-}
-
-func dfs(s string, dict map[string]bool, cache map[string]bool) bool {
-	value, isKeyExist := cache[s]
-	if isKeyExist {
-		return value
-	}
-	if len(s) == 0 {
-		return true
-	}
-	for i := 1; i <= len(s); i++ {
-		left := s[0:i]
-		right := s[i:]
-		if dict[left] && dfs(right, dict, cache) {
-			cache[s] = true
-			return true
+	for i := 1; i <= n; i++ {
+		list := []string{}
+		for j := 0; j < i; j++ {
+			subStr := s[j:i]
+			if dict[subStr] {
+				// start j to i contains word in dict
+				for _, w := range dp[j] {
+					list = append(list, strings.TrimSpace(w+" "+subStr))
+				}
+			}
 		}
+		dp[i] = list
 	}
-	cache[s] = false
-	return false
+	return dp[n]
 }
 
 func FindAllConcatenatedWordsInADict(words []string) []string {
@@ -73,20 +88,7 @@ func isConcat(word string, dict map[string]bool, cache map[string]bool) bool {
 	return cache[word]
 }
 
-type LongestCommonSubsequence struct {
-	text1 string
-	text2 string
-	dp    [][]int
-}
-
-func NewLongestCommonSubsequence(text1 string, text2 string) string {
-	l := LongestCommonSubsequence{text1: text1, text2: text2}
-	l.longestCommonSubsequence()
-	return l.reconstructSubsequence()
-}
-
-func (l *LongestCommonSubsequence) longestCommonSubsequence() int {
-	text1, text2 := l.text1, l.text2
+func LongestCommonSubsequence(text1 string, text2 string) int {
 	l1, l2 := len(text1), len(text2)
 	dp := make([][]int, l1+1)
 	for i := range dp {
@@ -97,16 +99,14 @@ func (l *LongestCommonSubsequence) longestCommonSubsequence() int {
 			if text1[i-1] == text2[j-1] {
 				dp[i][j] = 1 + dp[i-1][j-1] // 1 + text1[i -1] && text2[j - 1]
 			} else {
-				dp[i][j] = max(dp[i-1][j], dp[i][j-1]) // check text1[i -1] || text2[j - 1]
+				dp[i][j] = max(dp[i-1][j], dp[i][j-1]) // check text1[i -1] & text2[j] or text1[i] & text2[j - 1]
 			}
 		}
 	}
-	l.dp = dp
 	return dp[l1][l2]
 }
 
-func (l *LongestCommonSubsequence) reconstructSubsequence() string {
-	text1, text2, dp := l.text1, l.text2, l.dp
+func ReconstructLongestCommonSubsequence(text1 string, text2 string, dp [][]int) string {
 	text := []byte{}
 	for i, j := len(text1), len(text2); i > 0 && j > 0; {
 		if text1[i-1] == text2[j-1] {
@@ -121,6 +121,52 @@ func (l *LongestCommonSubsequence) reconstructSubsequence() string {
 	}
 	slices.Reverse(text)
 	return string(text)
+}
+
+// LC516
+func LongestPalindromeSubseq(s string) int {
+	sb := []byte(s)
+	slices.Reverse(sb)
+	t := string(sb)
+	n := len(s)
+	// LCS with 2 slices
+	current := make([]int, n+1)
+	dp := make([]int, n+1)
+	for i := 1; i <= n; i++ {
+		for j := 1; j <= n; j++ {
+			if s[i-1] == t[j-1] {
+				current[j] = 1 + dp[j-1]
+			} else {
+				current[j] = max(current[j-1], dp[j])
+			}
+		}
+		dp, current = current, dp
+	}
+	return dp[n]
+}
+
+// LC 5
+func LongestPalindromeSubstring(s string) string {
+	maxCount, start := 0, 0
+	for i := 0; i < len(s); i++ {
+		for l, r := i, i; l >= 0 && r < len(s) && s[l] == s[r]; {
+			if r-l+1 > maxCount {
+				maxCount = r - l + 1
+				start = l
+			}
+			l--
+			r++
+		}
+		for l, r := i, i+1; l >= 0 && r < len(s) && s[l] == s[r]; {
+			if r-l+1 > maxCount {
+				maxCount = r - l + 1
+				start = l
+			}
+			l--
+			r++
+		}
+	}
+	return s[start : start+maxCount]
 }
 
 func numDistinct(s string, t string) int {
@@ -318,16 +364,34 @@ func maxProduct(nums []int) int {
 	return result
 }
 
+// LC279
 func numSquares(n int) int {
 	dp := make([]int, n+1)
 	for num := 1; num <= n; num++ {
-		for i := 1; i*i <= n; i++ {
-			dp[num] = min(dp[num], dp[num-(i*i)]+1)
+		current := n
+		for i := 1; i*i <= num; i++ {
+			current = min(current, 1+dp[num-(i*i)])
 		}
+		dp[num] = current
 	}
 	return dp[n]
 }
 
+// LC377
+func combinationSum4(nums []int, target int) int {
+	dp := make([]int, target+1)
+	dp[0] = 1
+	for i := 1; i <= target; i++ {
+		for _, num := range nums {
+			if i-num >= 0 {
+				dp[i] += dp[i-num]
+			}
+		}
+	}
+	return dp[target]
+}
+
+// LC 221
 func maximalSquare(matrix [][]byte) int {
 	m, n := len(matrix), len(matrix[0])
 	dp := make([][]int, m+1)
@@ -381,6 +445,31 @@ func rob(nums []int) int {
 
 func rob2(nums []int) int {
 	return max(nums[0], rob(nums[1:]), rob(nums[:len(nums)-1]))
+}
+
+// LC740
+func deleteAndEarn(nums []int) int {
+	count := map[int]int{}
+	for _, v := range nums {
+		count[v]++
+	}
+	slices.Sort(nums)
+	e1, e2 := 0, 0
+	for i := 0; i < len(nums); i++ {
+		if i > 0 && nums[i] == nums[i-1] {
+			continue
+		}
+		earn := nums[i] * count[nums[i]]
+		temp := e2
+		if i > 0 && nums[i-1]+1 == nums[i] {
+			e2 = max(earn+e1, e2)
+			e1 = temp
+		} else {
+			e2 = earn + e2
+			e1 = temp
+		}
+	}
+	return e2
 }
 
 func longestIncreasingPath(matrix [][]int) int {
@@ -511,24 +600,69 @@ func numDecodings(s string) int {
 	return dp[0]
 }
 
-func maxProfit(prices []int) int {
+// LC309
+/*
+[]noStock: Can buy or rest
+[]hasStock: Can sell or cooldown
+[]justSold: Only cooldown
+*/
+func BestTimeToBuyStockWithCooldown(prices []int) int {
 	n := len(prices)
-	maxProfitBuyAt := make([]int, n)
-	for buy := n - 2; buy >= 0; buy-- {
-		for sell := buy + 1; sell < n; sell++ {
-			if prices[buy] > prices[sell] {
-				continue
-			}
-			profit := prices[sell] - prices[buy]
-			// cooldown
-			if sell+2 < n {
-				profit += maxProfitBuyAt[sell+2]
-			}
-			maxProfitBuyAt[buy] = max(maxProfitBuyAt[buy], profit)
-		}
-		maxProfitBuyAt[buy] = max(maxProfitBuyAt[buy], maxProfitBuyAt[buy+1])
+	noStock, hasStock, justSold := make([]int, n), make([]int, n), make([]int, n)
+	hasStock[0] = -prices[0] // buy at index 0 so profit -prices[0]
+	for i := 1; i < n; i++ {
+		noStock[i] = max(noStock[i-1], justSold[i-1])
+		hasStock[i] = max(hasStock[i-1], noStock[i-1]-prices[i])
+		justSold[i] = hasStock[i-1] + prices[i]
 	}
-	return maxProfitBuyAt[0]
+	return max(noStock[n-1], justSold[n-1])
+}
+
+// LC122
+func BestTimeToBuyStockII(prices []int) int {
+	profit := 0
+	for i := 1; i < len(prices); i++ {
+		if prices[i] > prices[i-1] {
+			profit += prices[i] - prices[i-1]
+		}
+	}
+	return profit
+}
+
+// LC 188/123 O(n*k)
+func BestTimeToBuyStockIV(k int, prices []int) int {
+	n := len(prices)
+	dp := make([][]int, k+1)
+	for i := 0; i <= k; i++ {
+		dp[i] = make([]int, n)
+	}
+	for i := 1; i <= k; i++ {
+		maxDiff := -prices[0]
+		for j := 1; j < n; j++ {
+			dp[i][j] = max(dp[i][j-1], maxDiff+prices[j])
+			maxDiff = max(maxDiff, dp[i-1][j]-prices[j])
+			// profit := 0
+			// for m := 0; m < j; m++ {
+			// 	profit = max(profit, prices[j]-prices[m]+dp[i-1][m])
+			// }
+			// // O(n*k*k) not making tx or complete tx by (buying at m and sell at j) + previos tx at day m
+			// dp[i][j] = max(dp[i][j-1], profit)
+		}
+	}
+	return dp[k][n-1]
+}
+
+// LC 714
+// noStock  <-> hasStock
+func BestTimeToBuyStockWithFee(prices []int, fee int) int {
+	n := len(prices)
+	noStock, hasStock := make([]int, n), make([]int, n)
+	hasStock[0] = -prices[0] // buy at index 0 so profit -prices[0]
+	for i := 1; i < n; i++ {
+		noStock[i] = max(noStock[i-1], hasStock[i-1]+prices[i]-fee)
+		hasStock[i] = max(hasStock[i-1], noStock[i]-prices[i])
+	}
+	return noStock[n-1]
 }
 
 /*
@@ -625,6 +759,31 @@ func stoneGame(piles []int) bool {
 	return dfs(0, n-1) > total/2
 }
 
+// LC 1140
+func stoneGameII(piles []int) int {
+	n := len(piles)
+	suffixSum := make([]int, n+1)
+	for i := n - 1; i >= 0; i-- {
+		suffixSum[i] = suffixSum[i+1] + piles[i]
+	}
+	dp := make([][]int, n)
+	for i := range dp {
+		dp[i] = make([]int, n+1)
+	}
+	for i := n - 1; i >= 0; i-- {
+		for m := 1; m <= n; m++ {
+			if i+2*m >= n {
+				dp[i][m] = suffixSum[i]
+			} else {
+				for x := 1; x <= 2*m; x++ {
+					dp[i][m] = max(dp[i][m], suffixSum[i]-dp[i+x][max(m, x)])
+				}
+			}
+		}
+	}
+	return dp[0][1]
+}
+
 // LC64
 func minPathSum(grid [][]int) int {
 	m, n := len(grid), len(grid[0])
@@ -694,6 +853,19 @@ func NumRollsToTarget(n int, k int, target int) int {
 	return dp[n][target]
 }
 
+// LC 343
+func integerBreak(n int) int {
+	dp := make([]int, n+1)
+	dp[1] = 1
+	for num := 2; num <= n; num++ {
+		dp[num] = 1
+		for i := 1; i < num; i++ { // should not break n
+			dp[num] = max(dp[num], max(dp[i], i)*(num-i))
+		}
+	}
+	return dp[n]
+}
+
 // LC576
 func findPaths(m int, n int, maxMove int, startRow int, startColumn int) int {
 	mod := int(1e9 + 7)
@@ -759,9 +931,54 @@ func longestIdealString(s string, k int) int {
 	return res
 }
 
+// LC 300
+func LongestIncreasingSubSequence(nums []int) int {
+	n := len(nums)
+	dp := make([]int, n)
+	res := 0
+	for i := n - 1; i >= 0; i-- {
+		dp[i] = 1
+		for j := i + 1; j < n; j++ {
+			if nums[i] < nums[j] {
+				dp[i] = max(dp[i], 1+dp[j])
+			}
+		}
+		res = max(res, dp[i])
+	}
+	return res
+}
+
+// LC 673
+func findNumberOfLIS(nums []int) int {
+	n := len(nums)
+	dp := make([][2]int, n)
+	maxLIS, maxCount := 0, 0
+	for i := n - 1; i >= 0; i-- {
+		maxCurrentLIS, maxCurrentCount := 1, 1
+		for j := i + 1; j < n; j++ {
+			if nums[i] < nums[j] {
+				length, cnt := dp[j][0], dp[j][1]
+				if length+1 > maxCurrentLIS {
+					maxCurrentLIS = length + 1
+					maxCurrentCount = cnt
+				} else if length+1 == maxCurrentLIS {
+					maxCurrentCount += cnt
+				}
+			}
+		}
+		dp[i] = [2]int{maxCurrentLIS, maxCurrentCount}
+		if maxLIS < maxCurrentLIS {
+			maxLIS = maxCurrentLIS
+			maxCount = maxCurrentCount
+		} else if maxLIS == maxCurrentLIS {
+			maxCount += maxCurrentCount
+		}
+	}
+	return maxCount
+}
+
 // LC1220
 func countVowelPermutation(n int) int {
-	const MOD = int(1e9 + 7)
 	a, e, i, o, u := 1, 1, 1, 1, 1
 	for j := 1; j < n; j++ {
 		a_next := e
@@ -772,4 +989,69 @@ func countVowelPermutation(n int) int {
 		a, e, i, o, u = a_next, e_next, i_next, o_next, u_next
 	}
 	return (a + e + i + o + u) % MOD
+}
+
+// LC1866
+func rearrangeSticks(n int, k int) int {
+	dp := make([][]int, n+1)
+	for i := range dp {
+		dp[i] = make([]int, k+1)
+	}
+	dp[0][0] = 1
+	for i := 1; i <= n; i++ {
+		for j := 1; j <= k; j++ {
+			dp[i][j] = (dp[i-1][j-1] + (i-1)*dp[i-1][j]) % MOD
+		}
+	}
+	return dp[n][k] % MOD
+}
+
+// LC 1856
+func maxSumMinProduct(nums []int) int {
+	n := len(nums)
+	prefix := make([]int, n+1)
+	for i, v := range nums {
+		prefix[i+1] = prefix[i] + v
+	}
+	stack := [][2]int{} // [index, val] increasing order stack
+	res := 0
+	for i := 0; i < n; i++ {
+		newStart := i
+		for len(stack) > 0 && stack[len(stack)-1][1] > nums[i] {
+			start, val := stack[len(stack)-1][0], stack[len(stack)-1][1]
+			sum := prefix[i] - prefix[start]
+			res = max(res, sum*val)
+			newStart = start
+			stack = stack[:len(stack)-1]
+		}
+		stack = append(stack, [2]int{newStart, nums[i]})
+	}
+
+	for _, v := range stack {
+		start, val := v[0], v[1]
+		sum := prefix[n] - prefix[start]
+		res = max(res, sum*val)
+	}
+	return res % MOD
+}
+
+// LC 2707
+func MinExtraChar(s string, dictionary []string) int {
+	n := len(s)
+	dict := map[string]bool{}
+	dp := make([]int, n+1)
+	for _, v := range dictionary {
+		dict[v] = true
+	}
+	for i := 1; i <= n; i++ {
+		// skip current char
+		res := 1 + dp[i-1]
+		for j := 0; j < i; j++ {
+			if dict[s[j:i]] {
+				res = min(res, dp[j])
+			}
+		}
+		dp[i] = res
+	}
+	return dp[n]
 }
