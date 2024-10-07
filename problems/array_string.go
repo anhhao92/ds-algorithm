@@ -853,3 +853,17 @@ func FindLengthLongestCommonPrefix(arr1 []int, arr2 []int) int {
 	}
 	return length
 }
+
+func arrayRankTransform(arr []int) []int {
+	sortArr := slices.Clone(arr)
+	slices.Sort(sortArr)
+	sortArr = slices.Compact(sortArr)
+	hashMap := map[int]int{}
+	for i := 0; i < len(sortArr); i++ {
+		hashMap[sortArr[i]] = i + 1
+	}
+	for i := range arr {
+		arr[i] = hashMap[arr[i]]
+	}
+	return arr
+}

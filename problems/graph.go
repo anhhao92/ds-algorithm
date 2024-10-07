@@ -525,3 +525,22 @@ func FindOrder(numCourses int, prerequisites [][]int) []int {
 	}
 	return []int{}
 }
+
+// LC 2569
+func checkValidGridKnightConfiguration(grid [][]int) bool {
+	n := len(grid)
+	moves := [][2]int{{-2, 1}, {-2, -1}, {-1, 2}, {-1, -2}, {2, 1}, {2, -1}, {1, 2}, {1, -2}}
+	nextRow, nextCol := 0, 0
+	for i := 0; i < n*n; i++ {
+		if grid[nextRow][nextCol] != i {
+			return false
+		}
+		for _, move := range moves {
+			r, c := nextRow+move[0], nextCol+move[1]
+			if r >= 0 && r < n && c >= 0 && c < n && grid[r][c] == i+1 {
+				nextRow, nextCol = r, c
+			}
+		}
+	}
+	return true
+}

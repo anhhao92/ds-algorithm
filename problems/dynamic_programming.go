@@ -2,6 +2,7 @@ package problems
 
 import (
 	"math"
+	"math/bits"
 	"slices"
 	"strconv"
 	"strings"
@@ -89,13 +90,13 @@ func isConcat(word string, dict map[string]bool, cache map[string]bool) bool {
 }
 
 func LongestCommonSubsequence(text1 string, text2 string) int {
-	l1, l2 := len(text1), len(text2)
-	dp := make([][]int, l1+1)
+	m, n := len(text1), len(text2)
+	dp := make([][]int, m+1)
 	for i := range dp {
-		dp[i] = make([]int, l2+1)
+		dp[i] = make([]int, n+1)
 	}
-	for i := 1; i <= l1; i++ {
-		for j := 1; j <= l2; j++ {
+	for i := 1; i <= m; i++ {
+		for j := 1; j <= n; j++ {
 			if text1[i-1] == text2[j-1] {
 				dp[i][j] = 1 + dp[i-1][j-1] // 1 + text1[i -1] && text2[j - 1]
 			} else {
@@ -103,7 +104,26 @@ func LongestCommonSubsequence(text1 string, text2 string) int {
 			}
 		}
 	}
-	return dp[l1][l2]
+	return dp[m][n]
+}
+
+// LC 1035
+func maxUncrossedLines(nums1 []int, nums2 []int) int {
+	m, n := len(nums1), len(nums2)
+	dp := make([][]int, m+1)
+	for i := range dp {
+		dp[i] = make([]int, n+1)
+	}
+	for i := 1; i <= m; i++ {
+		for j := 1; j <= n; j++ {
+			if nums1[i-1] == nums2[j-1] {
+				dp[i][j] = 1 + dp[i-1][j-1]
+			} else {
+				dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+			}
+		}
+	}
+	return dp[m][n]
 }
 
 func ReconstructLongestCommonSubsequence(text1 string, text2 string, dp [][]int) string {
@@ -784,6 +804,27 @@ func stoneGameII(piles []int) int {
 	return dp[0][1]
 }
 
+// LC 1406
+func stoneGameIII(stoneValue []int) string {
+	n := len(stoneValue)
+	dp := make([]int, n+1) //dp[i] = Alice - Bob
+	for i := n - 1; i >= 0; i-- {
+		dp[i] = stoneValue[i] - dp[i+1]
+		if i+2 <= n {
+			dp[i] = max(dp[i], stoneValue[i]+stoneValue[i+1]-dp[i+2])
+		}
+		if i+3 <= n {
+			dp[i] = max(dp[i], stoneValue[i]+stoneValue[i+1]+stoneValue[i+2]-dp[i+3])
+		}
+	}
+	if dp[0] > 0 {
+		return "Alice"
+	} else if dp[0] < 0 {
+		return "Bob"
+	}
+	return "Tie"
+}
+
 // LC64
 func minPathSum(grid [][]int) int {
 	m, n := len(grid), len(grid[0])
@@ -949,7 +990,7 @@ func LongestIncreasingSubSequence(nums []int) int {
 }
 
 // LC 673
-func findNumberOfLIS(nums []int) int {
+func CountNumberOfLIS(nums []int) int {
 	n := len(nums)
 	dp := make([][2]int, n)
 	maxLIS, maxCount := 0, 0
@@ -1054,4 +1095,509 @@ func MinExtraChar(s string, dictionary []string) int {
 		dp[i] = res
 	}
 	return dp[n]
+}
+
+// LC 2369
+func validPartition(nums []int) bool {
+	n := len(nums)
+	dp := make([]bool, n+1)
+	dp[n] = true
+	for i := n - 2; i >= 0; i-- {
+		if nums[i] == nums[i+1] {
+			dp[i] = dp[i] || dp[i+2]
+			if i+2 < len(nums) && nums[i+1] == nums[i+2] {
+				dp[i] = dp[i] || dp[i+3]
+			}
+		}
+		if i+2 < n && nums[i]+1 == nums[i+1] && nums[i+1]+1 == nums[i+2] {
+			dp[i] = dp[i] || dp[i+3]
+		}
+	}
+	return dp[0]
+}
+
+// LC 691
+func minStickers(stickers []string, target string) int {
+	const maxSticker = int(1e9 + 7)
+	n := 1 << len(target)
+	dp := make([]int, n)
+	// for i := range dp {
+	// 	dp[i] = -1
+	// }
+	// dp[0] = 0
+	// for mask := range n {
+	// 	if dp[mask] == -1 {
+	// 		continue
+	// 	}
+	// 	for _, s := range stickers {
+	// 		var stickerSet [26]int
+	// 		for i := 0; i < len(s); i++ {
+	// 			stickerSet[s[i]-'a']++
+	// 		}
+	// 		currentMask := mask
+	// 		for i := 0; i < len(target); i++ {
+	// 			// current character wasn't set
+	// 			c := target[i] - 'a'
+	// 			if mask&(1<<i) == 0 && stickerSet[c] != 0 {
+	// 				stickerSet[c]--
+	// 				currentMask ^= 1 << i
+	// 			}
+	// 		}
+	// 		// more bits were set
+	// 		if dp[currentMask] == -1 || dp[currentMask] > dp[mask]+1 {
+	// 			dp[currentMask] = dp[mask] + 1
+	// 		}
+	// 	}
+	// }
+	// return dp[n-1]
+	var dfs func(mask int) int
+	dfs = func(mask int) int {
+		// done if all bits set to 1
+		if mask == n-1 {
+			return 0
+		}
+		if dp[mask] != 0 {
+			return dp[mask]
+		}
+		// in case we don't find any match sticker
+		dp[mask] = maxSticker
+		for _, s := range stickers {
+			var stickerSet [26]int
+			for i := 0; i < len(s); i++ {
+				stickerSet[s[i]-'a']++
+			}
+			currentMask := mask
+			for i := 0; i < len(target); i++ {
+				// current character wasn't set
+				c := target[i] - 'a'
+				if mask&(1<<i) == 0 && stickerSet[c] != 0 {
+					stickerSet[c]--
+					currentMask ^= 1 << i
+				}
+			}
+			// more bits were set
+			if currentMask > mask {
+				dp[mask] = min(dp[mask], 1+dfs(currentMask))
+			}
+		}
+		return dp[mask]
+	}
+	res := dfs(0)
+	if res != maxSticker {
+		return res
+	}
+	return -1
+}
+
+// LC 2140
+func mostPoints(questions [][]int) int64 {
+	n := len(questions)
+	dp := make([]int, n+1)
+	for i := n - 1; i >= 0; i-- {
+		point, skip := questions[i][0], questions[i][1]+1
+		if i+skip < n {
+			dp[i] = max(dp[i+1], dp[i+skip]+point)
+		} else {
+			dp[i] = max(dp[i+1], point)
+		}
+	}
+	return int64(dp[0])
+}
+
+// LC 2466
+func countGoodStrings(low int, high int, zero int, one int) int {
+	dp := make([]int, high+1)
+	dp[0] = 1
+	for i := 1; i <= high; i++ {
+		// zero=1, one=2 -> xx0 or xx11
+		if i >= zero {
+			dp[i] += dp[i-zero]
+		}
+		if i >= one {
+			dp[i] += dp[i-one]
+		}
+	}
+	res := 0
+	for i := low; i <= high; i++ {
+		res += dp[i]
+	}
+	return res % MOD
+}
+
+// LC 1626
+func bestTeamScore(scores []int, ages []int) int {
+	n := len(scores)
+	scoreAge := make([][2]int, n)
+	for i := range scoreAge {
+		scoreAge[i] = [2]int{scores[i], ages[i]}
+	}
+	slices.SortFunc(scoreAge, func(a, b [2]int) int {
+		// scores are equal then sort by age
+		if a[0] == b[0] {
+			return a[1] - b[1]
+		}
+		return a[0] - b[0]
+	})
+	dp := make([]int, n)
+	for i := range dp {
+		dp[i] = scoreAge[i][0]
+	}
+	for i := 0; i < n; i++ {
+		maxScore, maxAge := scoreAge[i][0], scoreAge[i][1]
+		for j := 0; j < i; j++ {
+			age := scoreAge[j][1]
+			if age <= maxAge {
+				dp[i] = max(dp[i], maxScore+dp[j])
+			}
+		}
+	}
+	return slices.Max(dp)
+}
+
+// LC 1048
+func LongestStrChain(words []string) int {
+	slices.SortFunc(words, func(a, b string) int {
+		return len(a) - len(b)
+	})
+	dp := map[string]int{}
+	res := 1
+	for _, w := range words {
+		dp[w] = 1
+		for i := range w {
+			pred := w[:i] + w[i+1:]
+			if val, ok := dp[pred]; ok {
+				dp[w] = max(dp[w], val+1)
+			}
+		}
+		res = max(res, dp[w])
+	}
+	return res
+}
+
+// LC 935
+func knightDialer(n int) int {
+	jumps := [...][]int{
+		{4, 6},
+		{6, 8},
+		{7, 9},
+		{4, 8},
+		{3, 9, 0},
+		{},
+		{1, 7, 0},
+		{2, 6},
+		{1, 3},
+		{2, 4},
+	}
+	const MOD = int(1e9 + 7)
+	var dp [10]int
+	for i := range dp {
+		dp[i] = 1
+	}
+
+	for range n - 1 {
+		var next [10]int
+		for i, jump := range jumps {
+			for _, cell := range jump {
+				next[i] = (next[i] + dp[cell]) % MOD
+			}
+		}
+		dp = next
+	}
+	sum := 0
+	for _, v := range dp {
+		sum = (sum + v) % MOD
+	}
+	return sum % MOD
+}
+
+// LC 688
+func knightProbability(n int, k int, row int, column int) float64 {
+	moves := [][2]int{{-2, 1}, {-2, -1}, {-1, 2}, {-1, -2}, {2, 1}, {2, -1}, {1, 2}, {1, -2}}
+	next := make([][]float64, n)
+	dp := make([][]float64, n)
+	for i := range n {
+		dp[i] = make([]float64, n)
+		next[i] = make([]float64, n)
+	}
+	dp[row][column] = 1
+	for range k {
+		for i := range n {
+			for j := range n {
+				next[i][j] = 0
+				for _, move := range moves {
+					// check prev move
+					r, c := i-move[0], j-move[1]
+					if r >= 0 && r < n && c >= 0 && c < n {
+						next[i][j] += dp[r][c] / 8.0
+					}
+				}
+			}
+		}
+		dp, next = next, dp
+	}
+	poss := 0.0
+	for i := range n {
+		for j := range n {
+			poss += dp[i][j]
+		}
+	}
+	return poss
+}
+
+// LC 368
+func largestDivisibleSubset(nums []int) []int {
+	slices.Sort(nums)
+	n := len(nums)
+	dp := make([][]int, n)
+	res := []int{}
+	for i := n - 1; i >= 0; i-- {
+		dp[i] = []int{nums[i]}
+		for j := i + 1; j < n; j++ {
+			if nums[j]%nums[i] == 0 {
+				if len(dp[j])+1 > len(dp[i]) {
+					dp[i] = append([]int{nums[i]}, dp[j]...)
+				}
+			}
+		}
+		if len(dp[i]) > len(res) {
+			res = dp[i]
+		}
+	}
+	return res
+}
+
+// LC 1799 bitmask
+func maxScore(nums []int) int {
+	n := len(nums)
+	dp := make([]int, 1<<n)
+	var gcd = func(x, y int) int {
+		for y != 0 {
+			x, y = y, x%y
+		}
+		return x
+	}
+	for mask := 1; mask < len(dp); mask++ {
+		c := bits.OnesCount(uint(mask))
+		if c%2 != 0 {
+			continue
+		}
+		step := c / 2 // (110011) -> step = 2
+		for i := 0; i < n-1; i++ {
+			if mask&(1<<i) == 0 {
+				continue
+			}
+			for j := i + 1; j < n; j++ {
+				if mask&(1<<j) == 0 {
+					continue
+				}
+				prevMask := mask // (110011) -> prev 000011
+				prevMask ^= 1 << i
+				prevMask ^= 1 << j
+				dp[mask] = max(dp[mask], step*gcd(nums[i], nums[j])+dp[prevMask])
+			}
+		}
+	}
+	return dp[(1<<n)-1]
+	// var dfs func(mask, step int) int
+	// dfs = func(mask, step int) int {
+	// 	if dp[mask] != 0 {
+	// 		return dp[mask]
+	// 	}
+	// 	var res int
+	// 	for i := 0; i < n-1; i++ {
+	// 		if mask&(1<<i) != 0 {
+	// 			continue
+	// 		}
+	// 		for j := i + 1; j < n; j++ {
+	// 			if mask&(1<<j) != 0 {
+	// 				continue
+	// 			}
+	// 			nextMask := mask | 1<<i | 1<<j
+	// 			res = max(res, step*gcd(nums[i], nums[j])+dfs(nextMask, step+1))
+	// 			dp[mask] = res
+	// 		}
+	// 	}
+	// 	return res
+	// }
+}
+
+// LC 1964
+func longestObstacleCourseAtEachPosition(obstacles []int) []int {
+	dp := []int{}
+	res := []int{}
+	// LIS variant
+	for _, obstacle := range obstacles {
+		index := BinarySearch(dp, obstacle+1) // upper bound
+		if index == len(dp) {
+			dp = append(dp, obstacle)
+		} else {
+			dp[index] = obstacle
+		}
+		res = append(res, index+1)
+	}
+	return res
+}
+
+// LC 1359
+func countOrders(n int) int {
+	slots := 2 * n
+	res := 1
+	// Put a pair (P1-P2) into s slot will be s*(s-1)/2 choices
+	for slots > 0 {
+		validChoices := slots * (slots - 1) / 2
+		res *= validChoices
+		slots -= 2
+	}
+	return res % MOD
+}
+
+// LC 2147
+func numberOfWays(corridor string) int {
+	dp := []int{}
+	res := 1
+	for i, c := range corridor {
+		if c == 'S' {
+			dp = append(dp, i)
+		}
+	}
+	if len(dp) < 2 || len(dp)%2 == 1 {
+		return 0
+	}
+	for i := 1; i+1 < len(dp); i += 2 {
+		res *= dp[i+1] - dp[i]
+		res = res % MOD
+	}
+	return res % MOD
+}
+
+// LC 1235
+func JobScheduling(startTime []int, endTime []int, profit []int) int {
+	n := len(startTime)
+	intervals := make([][3]int, n)
+	dp := make([]int, n+1)
+	for i := range n {
+		intervals[i][0] = startTime[i]
+		intervals[i][1] = endTime[i]
+		intervals[i][2] = profit[i]
+	}
+	slices.SortFunc(intervals, func(a, b [3]int) int {
+		return a[0] - b[0]
+	})
+	for i := range intervals {
+		startTime[i] = intervals[i][0]
+	}
+	for i := len(startTime) - 1; i >= 0; i-- {
+		dp[i] = intervals[i][2]
+		endTime := intervals[i][1]
+		index, _ := slices.BinarySearch(startTime, endTime)
+		if index < len(startTime) {
+			dp[i] += dp[index]
+		}
+		dp[i] = max(dp[i], dp[i+1])
+	}
+	return dp[0]
+}
+
+// LCC 552
+/* L
+A |1|1|0
+  |1|0|0
+*/
+func checkRecord(n int) int {
+	var dp = [2][3]int{{1, 1, 0}, {1, 0, 0}}
+	var next [2][3]int
+	for i := 0; i < n-1; i++ {
+		// pick P we must reset L when picking P
+		next[0][0] = (dp[0][0] + dp[0][1] + dp[0][2]) % MOD
+		next[1][0] = (dp[1][0] + dp[1][1] + dp[1][2]) % MOD
+		// pick L
+		next[0][1] = dp[0][0]
+		next[0][2] = dp[0][1]
+		next[1][1] = dp[1][0]
+		next[1][2] = dp[1][1]
+		// pick A
+		next[1][0] += (dp[0][0] + dp[0][1] + dp[0][2]) % MOD
+		dp, next = next, dp
+	}
+	res := 0
+	for _, row := range dp {
+		for _, v := range row {
+			res = (res + v) % MOD
+		}
+	}
+	return res
+}
+
+// LC 926
+func minFlipsMonoIncreasing(s string) int {
+	res, countOne := 0, 0
+	for i := 0; i < len(s); i++ {
+		// if we get 1 it doesn't matter what came before
+		// ex 00[1], 11[1]
+		if s[i] == '1' {
+			countOne++
+		} else {
+			res = min(countOne, res+1) // flip all 1 or flip SoFar + 1
+		}
+	}
+	return res
+}
+
+// LC 2218
+func maxValueOfCoins(piles [][]int, k int) int {
+	n := len(piles)
+	dp := make([][]int, n)
+	for i := range dp {
+		dp[i] = make([]int, k+1)
+	}
+	var dfs func(index, coin int) int
+	dfs = func(index, coin int) int {
+		if index == len(piles) {
+			return 0
+		}
+		if dp[index][coin] != 0 {
+			return dp[index][coin]
+		}
+		dp[index][coin] = dfs(index+1, coin)
+		sum := 0
+		for i := 0; i < min(coin, len(piles[index])); i++ {
+			sum += piles[index][i]
+			dp[index][coin] = max(dp[index][coin], sum+dfs(index+1, coin-i-1))
+		}
+		return dp[index][coin]
+
+	}
+	return dfs(0, k)
+}
+
+// LC 312
+func maxCoinsBrustBallons(nums []int) int {
+	n := len(nums)
+	dp := make([][]int, n+1)
+	for i := range dp {
+		dp[i] = make([]int, n+1)
+	}
+	var dfs func(l, r int) int
+	dfs = func(l, r int) int {
+		if l > r {
+			return 0
+		}
+		if dp[l][r] != 0 {
+			return dp[l][r]
+		}
+		for i := l; i <= r; i++ {
+			left, right := 1, 1
+			// as we pop i last so left=l-1, right=r+1
+			if l-1 >= 0 {
+				left = nums[l-1]
+			}
+			if r+1 < n {
+				right = nums[r+1]
+			}
+			coin := left*nums[i]*right + dfs(l, i-1) + dfs(i+1, r)
+			dp[l][r] = max(dp[l][r], coin)
+		}
+		return dp[l][r]
+	}
+	return dfs(0, n-1)
 }

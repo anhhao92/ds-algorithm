@@ -3,6 +3,7 @@ package problems
 import (
 	"math"
 	"slices"
+	"strings"
 )
 
 // Leetcode 239
@@ -439,4 +440,26 @@ func FindSubstring(s string, words []string) []int {
 		}
 	}
 	return res
+}
+
+// 3305
+func CountOfSubstrings(word string, k int) int {
+	arr := "aeiou"
+	count := 0
+	for l := range word {
+		hashSet := map[rune]bool{}
+		consonant := 0
+		for r := l; r < len(word) && consonant <= k; r++ {
+			if strings.ContainsRune(arr, rune(word[r])) {
+				hashSet[rune(word[r])] = true
+			} else {
+				consonant++
+			}
+
+			if len(hashSet) == len(arr) && consonant == k {
+				count++
+			}
+		}
+	}
+	return count
 }

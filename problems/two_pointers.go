@@ -35,6 +35,24 @@ func RemoveElement(nums []int, val int) int {
 	return l
 }
 
+// LC 31
+func nextPermutation(nums []int) {
+	// if array is descending order no next larger permutation
+	i := len(nums) - 2
+	for i >= 0 && nums[i] >= nums[i+1] {
+		i--
+	}
+	// find 1st greater than nums[i-1]
+	if i >= 0 {
+		j := len(nums) - 1
+		for j >= 0 && nums[j] <= nums[i] {
+			j--
+		}
+		nums[i], nums[j] = nums[j], nums[i]
+	}
+	slices.Reverse(nums[i+1:])
+}
+
 func TwoSum(numbers []int, target int) []int {
 	l, r := 0, len(numbers)
 	for l < r {

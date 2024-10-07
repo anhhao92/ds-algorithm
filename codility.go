@@ -58,16 +58,15 @@ func MinLengthFixedBoard(nums []int) int {
 
 func minimumDeletions(s string) int {
 	count := 0
-	stack := []byte{s[0]}
-	for i := 1; i < len(s); i++ {
-		if len(stack) > 0 && stack[len(stack)-1] == 'b' && s[i] == 'a' {
-			stack = stack[:len(stack)-1]
+	res := 0
+	for i := 0; i < len(s); i++ {
+		if s[i] == 'b' {
 			count++
 		} else {
-			stack = append(stack, s[i])
+			res = min(res+1, count)
 		}
 	}
-	return count
+	return res
 }
 
 func countCarPassingSpeedCam(s string) int {

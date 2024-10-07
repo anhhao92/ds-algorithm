@@ -618,3 +618,19 @@ func mergeTriplets(triplets [][]int, target []int) bool {
 	}
 	return len(hashSet) == 3
 }
+
+// LC 1968
+func rearrangeArrayNotEqualAverageNeigbors(nums []int) []int {
+	slices.Sort(nums)
+	res := make([]int, 0, len(nums))
+	l, r := 0, len(nums)-1
+	for l <= r {
+		res = append(res, nums[l])
+		l++
+		if l <= r {
+			res = append(res, nums[r])
+			r--
+		}
+	}
+	return res
+}

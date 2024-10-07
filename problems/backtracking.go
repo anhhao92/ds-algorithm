@@ -258,63 +258,56 @@ func FindItinerary(tickets [][]string) []string {
 }
 
 func SolveSudoku(board [][]byte) {
-	dfsSudoku(0, 0, board)
-}
-
-func dfsSudoku(row int, col int, board [][]byte) bool {
-	if col == 9 {
-		row++
-		col = 0
-	}
-	if row == 9 {
-		return true
-	}
-	// search next col
-	if board[row][col] != '.' {
-		return dfsSudoku(row, col+1, board)
-	}
-	for i := byte('1'); i <= '9'; i++ {
-		if isValid(row, col, board, i) {
-			board[row][col] = i
-			if dfsSudoku(row, col+1, board) {
-				return true
+	isValid := func(row, col int, current byte) bool {
+		for i := 0; i < 9; i++ {
+			if board[row][i] == current {
+				return false
 			}
-			// backtracking
-			board[row][col] = '.'
-		}
-	}
-	return false
-}
-
-func isValid(row, col int, board [][]byte, current byte) bool {
-	for i := 0; i < 9; i++ {
-		if board[row][i] == current {
-			return false
-		}
-		if board[i][col] == current {
-			return false
-		}
-	}
-	rowStart, rowEnd := findBoxCoor(row)
-	colStart, colEnd := findBoxCoor(col)
-	for i := rowStart; i < rowEnd; i++ {
-		for j := colStart; j < colEnd; j++ {
-			if board[i][j] == current {
+			if board[i][col] == current {
 				return false
 			}
 		}
+		// check 3x3 sub box
+		rowStart := row - row%3
+		colStart := col - col%3
+		for i := rowStart; i < rowStart+3; i++ {
+			for j := colStart; j < colStart+3; j++ {
+				if board[i][j] == current {
+					return false
+				}
+			}
+		}
+		return true
 	}
-	return true
-}
-
-func findBoxCoor(coor int) (start, end int) {
-	if coor < 3 {
-		return 0, 3
-	} else if coor < 6 {
-		return 3, 6
-	} else {
-		return 6, 9
+	isBoardSolved := func(row, col *int) bool {
+		for *row = 0; *row < 9; *row++ {
+			for *col = 0; *col < 9; *col++ {
+				if board[*row][*col] == '.' {
+					return false
+				}
+			}
+		}
+		return true
 	}
+	var backtrack func() bool
+	backtrack = func() bool {
+		var row, col int
+		if isBoardSolved(&row, &col) {
+			return true
+		}
+		for i := byte('1'); i <= '9'; i++ {
+			if isValid(row, col, i) {
+				board[row][col] = i
+				if backtrack() {
+					return true
+				}
+				// backtracking
+				board[row][col] = '.'
+			}
+		}
+		return false
+	}
+	backtrack()
 }
 
 type PartitionPalindrome struct {
@@ -477,6 +470,18 @@ func subsetsWithDup(nums []int) [][]int {
 	}
 	dfs([]int{}, 0)
 	return result
+}
+
+// LC 1863
+func subsetXORSum(nums []int) int {
+	var backtrack func(index int, sum int) int
+	backtrack = func(index int, sum int) int {
+		if index == len(nums) {
+			return sum
+		}
+		return backtrack(index+1, sum) + backtrack(index+1, sum^nums[index])
+	}
+	return backtrack(0, 0)
 }
 
 // LC 93
