@@ -254,15 +254,21 @@ func canPartition(nums []int) bool {
 	return dp[len(nums)-1][half]
 }
 
-// Unbounded Knapsack
-func coinChange(coins []int, amount int) int {
+/*
+LC 322 Unbounded Knapsack
+amount = [5 4 3 2 1 0] coin=[1, 3, 5]
+
+	init dp = maxInt
+	dp = [1 2 1 2 1 0]
+*/
+func CoinChange(coins []int, amount int) int {
 	dp := make([]int, amount+1)
 	for i := 1; i <= amount; i++ {
 		dp[i] = amount + 1
 	}
 	for currentAmount := 1; currentAmount <= amount; currentAmount++ {
-		// update min amount for each coin
 		for _, coin := range coins {
+			// update min amount for each coin
 			if currentAmount-coin >= 0 {
 				dp[currentAmount] = min(dp[currentAmount], dp[currentAmount-coin]+1)
 			}
@@ -275,10 +281,18 @@ func coinChange(coins []int, amount int) int {
 	return -1
 }
 
-// Unbounded Knapsack
-func change(coins []int, amount int) int {
+/*
+	LC 518 Unbounded Knapsack
+
+amount x 5 4 3 2 1|0
+coin  |1|3 2 2 1 1|1 (use coin 1 or skip)
+coin  |3|1 0 1 0 0|1
+coin  |5|1 0 0 0 0|1
+*/
+func CoinChangeII(coins []int, amount int) int {
 	dp := make([]int, amount+1)
-	dp[0] = 1
+	dp[0] = 1 // basecase there's one way to sum up 0 amount
+	// optimized 1D array because we only need 1 row below from range 1 -> amount
 	for i := range coins {
 		for currentAmount := 1; currentAmount <= amount; currentAmount++ {
 			if currentAmount-coins[i] >= 0 {
@@ -290,10 +304,15 @@ func change(coins []int, amount int) int {
 	return dp[amount]
 }
 
-// Leetcode 497
-func findTargetSumWays(nums []int, target int) int {
-	// dp := make(map[string]int)
-	// return dfsFindTargetSum(0, 0, target, nums, dp)
+// Leetcode 494
+/* [1,2,4,2] sum = 6
+sum	0 1 2 3 4 5 6
+  1|1|1 0 0 0 0 0
+  2|1|1 1 1 0 0 0
+  4|1|1 1 1 1 1 1
+  2|1|1 2 2 2 2 2 (sum=6 pick(6-2) + skip 6)
+*/
+func FindTargetSumWays(nums []int, target int) int {
 	// Iterative approach: based on 2 * sum(P) = target + sum(nums) -> sum(P) must be even
 	// Find a subset non-continuos P of nums such that sum(P) = (target + sum(nums)) / 2
 	sum := 0
@@ -310,6 +329,7 @@ func findTargetSumWays(nums []int, target int) int {
 	// 0/1 Knapsack
 	dp := make([]int, target+1)
 	dp[0] = 1
+	// must filled from right to left
 	for _, v := range nums {
 		for i := target; i >= v; i-- {
 			dp[i] += dp[i-v]
@@ -1570,6 +1590,36 @@ func maxValueOfCoins(piles [][]int, k int) int {
 	return dfs(0, k)
 }
 
+// LC 10
+func isMatchRegex(s string, p string) bool {
+	dp := make(map[[2]int]bool)
+	var dfs func(i, j int) bool
+	dfs = func(i, j int) bool {
+		if i >= len(s) && j >= len(p) {
+			return true
+		}
+		if j >= len(p) {
+			return false
+		}
+		key := [2]int{i, j}
+		if v, ok := dp[key]; ok {
+			return v
+		}
+		dp[key] = false
+		isMatch := i < len(s) && (s[i] == p[j] || p[j] == '.')
+		if j+1 < len(p) && p[j+1] == '*' {
+			dp[key] = dfs(i, j+2) || (isMatch && dfs(i+1, j))
+			return dp[key]
+		}
+		if isMatch {
+			dp[key] = dfs(i+1, j+1)
+			return dp[key]
+		}
+		return dp[key]
+	}
+	return dfs(0, 0)
+}
+
 // LC 312
 func maxCoinsBrustBallons(nums []int) int {
 	n := len(nums)
@@ -1600,4 +1650,256 @@ func maxCoinsBrustBallons(nums []int) int {
 		return dp[l][r]
 	}
 	return dfs(0, n-1)
+}
+
+// LC1639 https://leetcode.com/problems/number-of-ways-to-form-a-target-string-given-a-dictionary/
+func NumWaysToFormTargetString(words []string, target string) int {
+	n := len(words[0])
+	count := make([][]int, n)
+	for i := 0; i < n; i++ {
+		count[i] = make([]int, 26)
+		for _, word := range words {
+			count[i][int(word[i]-'a')]++
+		}
+	}
+	dp := make([]int, len(target)+1)
+	dp[len(target)] = 1
+	for i := n - 1; i >= 0; i-- {
+		for j, c := range target {
+			dp[j] += dp[j+1] * count[i][c-'a']
+			dp[j] %= MOD
+		}
+	}
+	return dp[0]
+}
+
+// LC 1547
+/*
+0 1 --- 6 n
+*/
+func minCostCutStick(n int, cuts []int) int {
+	cuts = append(cuts, 0, n)
+	slices.Sort(cuts)
+	n = len(cuts)
+	dp := make([][]int, n+1)
+	for i := range dp {
+		dp[i] = make([]int, n+1)
+	}
+	for diff := 2; diff < n; diff++ {
+		for l := 0; l+diff < n; l++ {
+			r := l + diff
+			dp[l][r] = math.MaxInt32
+			for k := l + 1; k < r; k++ {
+				dp[l][r] = min(dp[l][r], cuts[r]-cuts[l]+dp[l][k]+dp[k][r])
+			}
+		}
+	}
+	return dp[0][n-1]
+
+	// var dfs func(l, r int) int
+	// dfs = func(l, r int) int {
+	// 	if r-l == 1 {
+	// 		return 0
+	// 	}
+	// 	key := [2]int{l, r}
+	// 	if v, ok := dp[key]; ok {
+	// 		return v
+	// 	}
+	// 	res := math.MaxInt32
+	// 	for _, c := range cuts {
+	// 		if l < c && c < r {
+	// 			res = min(res, r-l+dfs(l, c)+dfs(c, r))
+	// 		}
+	// 	}
+	// 	if res == math.MaxInt32 {
+	// 		res = 0
+	// 	}
+	// 	dp[key] = res
+	// 	return res
+	// }
+	// return dfs(0, n)
+}
+
+// LC 2742
+func PaintWalls(cost []int, time []int) int {
+	n := len(cost)
+	dp := make([][]int, n+1)
+	for i := range dp {
+		dp[i] = make([]int, n+1)
+	}
+	// base case i == n
+	for i := 1; i <= n; i++ {
+		dp[n][i] = math.MaxInt32
+	}
+	for i := n - 1; i >= 0; i-- {
+		for remain := 1; remain <= n; remain++ {
+			paint := cost[i] + dp[i+1][max(remain-time[i]-1, 0)]
+			skip := dp[i+1][remain]
+			dp[i][remain] = min(paint, skip)
+		}
+	}
+	return dp[0][n]
+}
+
+// LC 1269
+func numWaysToStayTheSamePlace(steps int, arrLen int) int {
+	// dfs(i, steps - 1) + dfs(i + 1, steps - 1) + dfs(i - 1, steps - 1)
+	arrLen = min(steps, arrLen)
+	dp := make([]int, arrLen)
+	next := make([]int, arrLen)
+	dp[0] = 1
+	for step := 1; step <= steps; step++ {
+		for i := 0; i < arrLen; i++ {
+			next[i] = dp[i]
+			if i-1 >= 0 {
+				next[i] = (next[i] + dp[i-1]) % MOD
+			}
+			if i+1 < arrLen {
+				next[i] = (next[i] + dp[i+1]) % MOD
+			}
+		}
+		dp, next = next, dp
+	}
+	return dp[0] % MOD
+}
+
+// LC 920
+func numMusicPlaylists(n int, goal int, k int) int {
+	dp := make([][]int, goal+1)
+	for i := range dp {
+		dp[i] = make([]int, n+1)
+		for j := range dp[i] {
+			dp[i][j] = -1
+		}
+	}
+
+	var dfs func(g, oldSong int) int
+	dfs = func(g, oldSong int) int {
+		if g == 0 && oldSong == n {
+			return 1
+		}
+		if g == 0 || oldSong > n {
+			return 0
+		}
+		if dp[g][oldSong] != -1 {
+			return dp[g][oldSong]
+		}
+		// choose new
+		res := (n - oldSong) * dfs(g-1, oldSong+1)
+		// choose old
+		if oldSong > k {
+			res += (oldSong - k) * dfs(g-1, oldSong)
+		}
+		dp[g][oldSong] = res % MOD
+		return res
+	}
+	return dfs(goal, 0)
+}
+
+// LC 1463
+func cherryPickup(grid [][]int) int {
+	m, n := len(grid), len(grid[0])
+	dp := make([][]int, n)
+	next := make([][]int, n)
+	for i := range dp {
+		dp[i] = make([]int, n)
+		next[i] = make([]int, n)
+	}
+	delta := [...]int{-1, 0, 1}
+	for r := m - 1; r >= 0; r-- {
+		for c1 := 0; c1 < n-1; c1++ {
+			for c2 := c1 + 1; c2 < n; c2++ {
+				maxCherries := 0
+				cherries := grid[r][c1] + grid[r][c2]
+				for _, d1 := range delta {
+					for _, d2 := range delta {
+						nextCol1, nextCol2 := c1+d1, c2+d2
+						if nextCol1 < 0 || nextCol2 == n {
+							continue
+						}
+						maxCherries = max(maxCherries, cherries+dp[nextCol1][nextCol2])
+					}
+				}
+				next[c1][c2] = maxCherries
+			}
+		}
+		dp, next = next, dp
+	}
+	return dp[0][n-1]
+}
+
+// LC 514
+func findRotateSteps(ring string, key string) int {
+	dp, next := make([]int, len(ring)), make([]int, len(ring))
+	var pos [26][]int
+	for i := 0; i < len(ring); i++ {
+		pos[ring[i]-'a'] = append(pos[ring[i]-'a'], i)
+	}
+	for k := len(key) - 1; k >= 0; k-- {
+		for r := 0; r < len(ring); r++ {
+			next[r] = 1_000_000
+			for _, i := range pos[key[k]-'a'] {
+				dist := min(abs(r-i), len(ring)-abs(r-i))
+				next[r] = min(next[r], 1+dist+dp[i])
+			}
+		}
+		dp, next = next, dp
+	}
+	return dp[0]
+	// var dfs func(index, k int) int
+	// dfs = func(index, k int) int {
+	// 	if k == len(key) {
+	// 		return 0
+	// 	}
+	// 	if dp[index][k] != 0 {
+	// 		return dp[index][k]
+	// 	}
+	// 	res := math.MaxInt32
+	// 	for i := 0; i < len(ring); i++ {
+	// 		if ring[i] == key[k] {
+	// 			dist := min(abs(index-i), len(ring)-abs(index-i))
+	// 			res = min(res, 1+dist+dfs(i, k+1))
+	// 		}
+	// 	}
+	// 	dp[index][k] = res
+	// 	return res
+	// }
+	// return dfs(0, 0)
+}
+
+// LC 629
+func kInversePairs(n int, k int) int {
+	dp := make([]int, k+1)
+	next := make([]int, k+1)
+	dp[0] = 1
+	for i := 1; i <= n; i++ {
+		total := 0
+		for j := 0; j <= k; j++ {
+			if j >= i {
+				total -= dp[j-i]
+			}
+			total += dp[j]
+			next[j] = total % MOD
+		}
+		dp, next = next, dp
+	}
+	return dp[k]
+	// var dfs func(num, l int) int
+	// dfs = func(num, l int) int {
+	// 	if num == 0 {
+	// 		if l == 0 {
+	// 			return 1
+	// 		}
+	// 		return 0
+	// 	}
+	// 	if l < 0 {
+	// 		return 0
+	// 	}
+	// 	res := 0
+	// 	for i := 0; i < num; i++ {
+	// 		res = (res + dfs(num-1, l-i)) % MOD
+	// 	}
+	// 	return res
+	// }
+	// return dfs(n, k)
 }

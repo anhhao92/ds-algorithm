@@ -22,6 +22,59 @@ func MergeTwoLists(list1 *ListNode, list2 *ListNode) *ListNode {
 	return head.next
 }
 
+// LC 23
+func MergeKLists(lists []*ListNode) *ListNode {
+	if len(lists) == 0 {
+		return nil
+	}
+	for len(lists) > 1 {
+		mergedList := []*ListNode{}
+		for i := 0; i < len(lists); i += 2 {
+			var l1 *ListNode = lists[i]
+			var l2 *ListNode
+			if i+1 < len(lists) {
+				l2 = lists[i+1]
+			}
+			mergedList = append(mergedList, MergeTwoLists(l1, l2))
+		}
+		lists = mergedList
+	}
+	return lists[0]
+}
+
+// LC 25
+func reverseKGroup(head *ListNode, k int) *ListNode {
+	getKNode := func(h *ListNode, kth int) *ListNode {
+		for h != nil && kth > 0 {
+			h = h.next
+			kth--
+		}
+		return h
+	}
+	dummy := &ListNode{next: head}
+	prevGroup := dummy
+	for {
+		kNode := getKNode(prevGroup, k)
+		if kNode == nil {
+			break
+		}
+		nextGroup := kNode.next
+		// reverse K group
+		// 1->2->3->4|2->1->3->4 update new head as [prevGroup->1|prevGroup->2]
+		prev, cur := nextGroup, prevGroup.next
+		for cur != nextGroup {
+			tmp := cur.next
+			cur.next = prev
+			prev = cur
+			cur = tmp
+		}
+		tmp := prevGroup.next
+		prevGroup.next = kNode
+		prevGroup = tmp
+	}
+	return dummy.next
+}
+
 // LC 287 Floyd's cycle detection
 func FindDuplicate(nums []int) int {
 	slow, fast := 0, 0
@@ -38,6 +91,18 @@ func FindDuplicate(nums []int) int {
 		fast = nums[fast]
 	}
 	return slow
+}
+
+// LC 2095
+func deleteMiddle(head *ListNode) *ListNode {
+	dummy := &ListNode{0, 0, head}
+	slow, fast := dummy, head
+	for fast != nil && fast.next != nil {
+		slow = slow.next
+		fast = fast.next.next
+	}
+	slow.next = slow.next.next
+	return dummy.next
 }
 
 // LC 146
@@ -132,9 +197,9 @@ func NewDoublyLinkedList() *DoublyLinkedList {
 	head.next = tail
 	tail.prev = head
 	return &DoublyLinkedList{
-		head:      head,
-		tail:      tail,
-		keyToNode: map[int]*DoublyListNode{},
+		head,
+		tail,
+		map[int]*DoublyListNode{},
 	}
 }
 
@@ -351,6 +416,34 @@ func ReverseLinkedListBetweenLeftRight(head *ListNode, left int, right int) *Lis
 	return dummy.next
 }
 
+// LC 234
+func isPalindromeLinkedList(head *ListNode) bool {
+	reverse := func(node *ListNode) *ListNode {
+		var prev *ListNode
+		var cur = node
+		for cur != nil {
+			next := cur.next
+			cur.next, prev = prev, cur
+			cur = next
+		}
+		return prev
+	}
+	slow, fast := head, head
+	for fast != nil && fast.next != nil {
+		slow = slow.next
+		fast = fast.next.next
+	}
+	node := reverse(slow)
+	for head != nil {
+		if head.val != node.val {
+			return false
+		}
+		head = head.next
+		node = node.next
+	}
+	return true
+}
+
 // LC 2487 monotonic stack
 func removeNodes(head *ListNode) *ListNode {
 	node := head
@@ -369,4 +462,19 @@ func removeNodes(head *ListNode) *ListNode {
 		head = stack[i]
 	}
 	return head
+}
+
+// LC 19
+func removeNthFromEnd(head *ListNode, n int) *ListNode {
+	dummy := &ListNode{next: head}
+	prev, cur := dummy, head
+	for range n {
+		cur = cur.next
+	}
+	for cur != nil {
+		prev = prev.next
+		cur = cur.next
+	}
+	prev.next = prev.next.next
+	return dummy.next
 }

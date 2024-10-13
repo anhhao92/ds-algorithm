@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	a := problems.JobScheduling([]int{1, 2, 3, 3}, []int{3, 4, 5, 6}, []int{50, 10, 40, 70})
+	a := problems.FindTargetSumWays([]int{1, 2, 4, 2}, 3)
 	fmt.Println("=>", a)
 }

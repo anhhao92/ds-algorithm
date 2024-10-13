@@ -211,36 +211,35 @@ func searchMatrix(matrix [][]int, target int) bool {
 
 /*
 LC 4
-[x1 x2 | x3 x4 x5 x6]
-[y1 y2 y3 y4 | y5 y6]
-Find the partitions satify the condition y4 <= x3 && x2 <= y5
+[x l1 | r1 x x x]
+[x x x l2 | r2 x]
+Find the partitions satify the condition l1 <= r2 && l2 <= r1
 */
 func FindMedianSortedArrays(nums1 []int, nums2 []int) float64 {
-	total := len(nums1) + len(nums2)
-	// we do binary search on nums1
-	if len(nums1) > len(nums2) {
-		nums2, nums1 = nums1, nums2
+	m, n := len(nums1), len(nums2)
+	if m > n {
+		return FindMedianSortedArrays(nums2, nums1)
 	}
-	l, r := 0, len(nums1)
+	l, r := 0, m
 	for l <= r {
 		mid1 := (l + r) / 2
-		mid2 := (total+1)/2 - mid1
+		mid2 := (m+n+1)/2 - mid1
 		l1, r1 := math.MinInt32, math.MaxInt32
-		l2, r2 := math.MinInt32, math.MaxInt32
-		if mid1 < len(nums1) {
+		if mid1 < m {
 			r1 = nums1[mid1]
 		}
 		if mid1-1 >= 0 {
 			l1 = nums1[mid1-1]
 		}
-		if mid2 < len(nums2) {
+		l2, r2 := math.MinInt32, math.MaxInt32
+		if mid2 < n {
 			r2 = nums2[mid2]
 		}
 		if mid2-1 >= 0 {
 			l2 = nums2[mid2-1]
 		}
 		if l1 <= r2 && l2 <= r1 {
-			if total%2 == 0 {
+			if (m+n)%2 == 0 {
 				return float64(max(l1, l2)+min(r1, r2)) / 2
 			}
 			return float64(max(l1, l2))
