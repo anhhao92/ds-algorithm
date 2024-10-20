@@ -2,7 +2,6 @@ package problems
 
 import (
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -222,39 +221,6 @@ func dfsQueenAtRow(r int, board [][]byte, result *[][]string, col, posDiag, negD
 		negDiag[r-c] = false
 		board[r][c] = '.'
 	}
-}
-
-func FindItinerary(tickets [][]string) []string {
-	adj := make(map[string][]string)
-	ans := []string{}
-
-	// Fill the adjacency list
-	for i := 0; i < len(tickets); i++ {
-		adj[tickets[i][0]] = append(adj[tickets[i][0]], tickets[i][1])
-	}
-
-	// Sort the destinations in lexical order
-	for key := range adj {
-		sort.Strings(adj[key])
-	}
-
-	// Use a stack to store the itinerary
-	stack := []string{"JFK"}
-
-	for len(stack) > 0 {
-		src := stack[len(stack)-1]
-		if len(adj[src]) == 0 {
-			ans = append(ans, src)
-			stack = stack[:len(stack)-1]
-		} else {
-			dst := adj[src][0]
-			adj[src] = adj[src][1:]
-			stack = append(stack, dst)
-		}
-	}
-	// Reverse the answer to get the correct order
-	slices.Reverse(ans)
-	return ans
 }
 
 func SolveSudoku(board [][]byte) {

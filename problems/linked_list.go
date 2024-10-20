@@ -478,3 +478,182 @@ func removeNthFromEnd(head *ListNode, n int) *ListNode {
 	prev.next = prev.next.next
 	return dummy.next
 }
+
+// LC 143
+func reorderList(head *ListNode) {
+	slow, fast := head, head.next
+	for fast != nil && fast.next != nil {
+		slow = slow.next
+		fast = fast.next.next
+	}
+	// reverse the half
+	half := slow.next
+	slow.next = nil
+	prev := slow.next
+	for half != nil {
+		next := half.next
+		half.next = prev
+		prev = half
+		half = next
+	}
+
+	first, second := head, prev
+	for second != nil {
+		next1, next2 := first.next, second.next
+		first.next = second
+		second.next = next1
+		first, second = next1, next2
+	}
+}
+
+// LC 86
+func partitionList(head *ListNode, x int) *ListNode {
+	left, right := &ListNode{}, &ListNode{}
+	leftTail, rightTail := left, right
+	for head != nil {
+		if head.val < x {
+			leftTail.next = head
+			leftTail = leftTail.next
+		} else {
+			rightTail.next = head
+			rightTail = rightTail.next
+		}
+		head = head.next
+	}
+	leftTail.next = right.next
+	rightTail.next = nil
+	return left.next
+}
+
+// LC 61
+func rotateRight(head *ListNode, k int) *ListNode {
+	if head == nil {
+		return head
+	}
+	tail := head
+	n := 1
+	for tail.next != nil {
+		tail = tail.next
+		n++
+	}
+	k = k % n
+	if k == 0 {
+		return head
+	}
+	// move to n - k - 1
+	cur := head
+	for range n - k - 1 {
+		cur = cur.next
+	}
+	newHead := cur.next
+	cur.next = nil
+	tail.next = head
+	return newHead
+}
+
+// LC 148
+func sortList(head *ListNode) *ListNode {
+	if head == nil || head.next == nil {
+		return head
+	}
+	findMid := func(n *ListNode) *ListNode {
+		slow, fast := n, n.next
+		for fast != nil && fast.next != nil {
+			slow = slow.next
+			fast = fast.next.next
+		}
+		return slow
+	}
+	merge := func(l, r *ListNode) *ListNode {
+		h := &ListNode{}
+		cur := h
+		for l != nil && r != nil {
+			if l.val <= r.val {
+				cur.next = l
+				l = l.next
+			} else {
+				cur.next = r
+				r = r.next
+			}
+			cur = cur.next
+		}
+		if l != nil {
+			cur.next = l
+		}
+		if r != nil {
+			cur.next = r
+		}
+		return h.next
+	}
+	left := head
+	right := findMid(head)
+	// split 2 half
+	temp := right.next
+	right.next = nil
+	right = temp
+
+	left = sortList(left)
+	right = sortList(right)
+	return merge(left, right)
+}
+
+// LC 147
+func insertionSortList(head *ListNode) *ListNode {
+	dummy := &ListNode{next: head}
+	cur, prev := head.next, head
+	for cur != nil {
+		if cur.val >= prev.val {
+			prev, cur = cur, cur.next
+			continue
+		}
+		// tmp -> 5 [6, prev] [4, cur] [1, next]
+		// tmp -> [4, cur], 5 [6, prev] 1
+		temp := dummy
+		for cur.val > temp.next.val {
+			temp = temp.next
+		}
+		prev.next = cur.next
+		cur.next = temp.next
+		temp.next = cur
+		cur = prev.next
+	}
+	return dummy.next
+}
+
+// LC 1669
+func mergeInBetween(list1 *ListNode, a int, b int, list2 *ListNode) *ListNode {
+	cur := list1
+	count := 0
+	for count < a-1 {
+		count++
+		cur = cur.next
+	}
+	prev1 := cur
+	for count <= b {
+		count++
+		cur = cur.next
+	}
+	prev1.next = list2
+	for list2.next != nil {
+		list2 = list2.next
+	}
+	list2.next = cur
+	return list1
+}
+
+// LC 1721
+func swapNodes(head *ListNode, k int) *ListNode {
+	cur := head
+	for range k - 1 {
+		cur = cur.next
+	}
+	l, r := cur, head
+	// 2 pointers shift to the end
+	for cur.next != nil {
+		cur = cur.next
+		r = r.next
+	}
+	// l, r will be at k(th) position
+	l.val, r.val = r.val, l.val
+	return head
+}

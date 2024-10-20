@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	a := problems.FindTargetSumWays([]int{1, 2, 4, 2}, 3)
+	a := problems.ShortestBridge([][]int{{0, 1}, {1, 0}})
 	fmt.Println("=>", a)
 }

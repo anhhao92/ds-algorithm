@@ -1903,3 +1903,128 @@ func kInversePairs(n int, k int) int {
 	// }
 	// return dfs(n, k)
 }
+
+// 1289
+func minFallingPathSum(grid [][]int) int {
+	m, n := len(grid), len(grid[0])
+	dp := make([][2]int, 0, 2) // [val, col]
+	for i := 0; i < n; i++ {
+		if len(dp) < 2 {
+			dp = append(dp, [2]int{grid[0][i], i})
+		} else if dp[1][0] > grid[0][i] {
+			dp[1][0] = grid[0][i]
+			dp[1][1] = i
+		}
+		slices.SortFunc(dp, func(a, b [2]int) int {
+			return a[0] - b[0]
+		})
+	}
+	ans := dp[0][0]
+	for i := 1; i < m; i++ {
+		next := make([][2]int, 0, 2)
+		for j := 0; j < n; j++ {
+			res := 1_000_000
+			for _, v := range dp {
+				val, col := v[0], v[1]
+				if col != j {
+					res = min(res, grid[i][j]+val)
+				}
+			}
+			if len(next) < 2 {
+				next = append(next, [2]int{res, j})
+				ans = res
+			} else if next[1][0] > res {
+				next[1][0] = res
+				next[1][1] = j
+			}
+			slices.SortFunc(next, func(a, b [2]int) int {
+				return a[0] - b[0]
+			})
+		}
+		ans = min(ans, next[0][0])
+		dp = next
+	}
+	return ans
+}
+
+// LC 446
+func numberOfArithmeticSlices(nums []int) int {
+	n := len(nums)
+	res := 0
+	dp := make([]map[int]int, n)
+	for i := range dp {
+		dp[i] = make(map[int]int)
+	}
+	for i := 0; i < n; i++ {
+		for j := 0; j < i; j++ {
+			diff := nums[i] - nums[j]
+			dp[i][diff] += 1 + dp[j][diff]
+			res += dp[j][diff]
+		}
+	}
+	return res
+}
+
+func getLengthOfOptimalCompression(s string, k int) int {
+	n := len(s)
+	dp := make([][]int, n)
+	for i := range dp {
+		dp[i] = make([]int, k+1)
+		for j := range dp[i] {
+			dp[i][j] = 1_000_000
+		}
+	}
+	getLength := func(freq int) int {
+		switch {
+		case freq == 1:
+			return 1
+		case freq < 10:
+			return 2
+		case freq < 100:
+			return 3
+		default:
+			return 4
+		}
+	}
+	var dfs func(i, remain int) int
+	dfs = func(i, remain int) int {
+		if remain < 0 {
+			return 1_000_000
+		}
+		// if we can delete remaining string or ending
+		if i == n || n-i <= remain {
+			return 0
+		}
+		if dp[i][remain] != 1_000_000 {
+			return dp[i][remain]
+		}
+		var freqCount [26]int
+		var maxFreq = 0
+		for j := i; j < n; j++ {
+			freqCount[s[j]-'a']++
+			maxFreq = max(maxFreq, freqCount[s[j]-'a'])
+			// keep maxFreq and delete the rest
+			dp[i][remain] = min(
+				dp[i][remain],
+				getLength(maxFreq)+dfs(j+1, remain-(j-i+1-maxFreq)),
+			)
+		}
+		return dp[i][remain]
+	}
+	return dfs(0, k)
+}
+
+// LC 1553
+func minDays(n int) int {
+	dp := map[int]int{0: 0, 1: 1}
+	var dfs func(num int) int
+	dfs = func(num int) int {
+		if v, ok := dp[num]; ok {
+			return v
+		}
+		one := 1 + num%2 + dfs(num/2)
+		two := 1 + num%3 + dfs(num/3)
+		return min(one, two)
+	}
+	return dfs(n)
+}
