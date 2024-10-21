@@ -151,6 +151,177 @@ func PostorderTraversal(root *TreeNode) []int {
 	return res
 }
 
+// LC 450
+func deleteNode(root *TreeNode, key int) *TreeNode {
+	if root == nil {
+		return root
+	}
+	if key > root.Val {
+		root.Right = deleteNode(root.Right, key)
+	} else if key < root.Val {
+		root.Left = deleteNode(root.Left, key)
+	} else {
+		if root.Left == nil {
+			return root.Right
+		}
+		if root.Right == nil {
+			return root.Left
+		}
+		// find the smallest on the right
+		cur := root.Right
+		for cur.Left != nil {
+			cur = cur.Left
+		}
+		root.Val = cur.Val // root, cur at same value
+		root.Right = deleteNode(root.Right, root.Val)
+	}
+	return root
+}
+
+// LC 701
+func insertIntoBST(root *TreeNode, val int) *TreeNode {
+	if root == nil {
+		return &TreeNode{Val: val}
+	}
+	cur := root
+	for cur != nil {
+		if val > cur.Val {
+			if cur.Right == nil {
+				cur.Right = &TreeNode{Val: val}
+				return root
+			}
+			cur = cur.Right
+		} else {
+			if cur.Left == nil {
+				cur.Left = &TreeNode{Val: val}
+				return root
+			}
+			cur = cur.Left
+		}
+	}
+	return root
+	// if val > root.Val {
+	// 	root.Right = insertIntoBST(root.Right, val)
+	// } else {
+	// 	root.Left = insertIntoBST(root.Left, val)
+	// }
+}
+
+// LC 226
+func invertTree(root *TreeNode) *TreeNode {
+	if root == nil {
+		return root
+	}
+	root.Left, root.Right = root.Right, root.Left
+	invertTree(root.Left)
+	invertTree(root.Right)
+	return root
+}
+
+// LC 543
+func diameterOfBinaryTree(root *TreeNode) int {
+	maxVal := 0
+	var dfs func(current *TreeNode) int
+	dfs = func(current *TreeNode) int {
+		if current == nil {
+			return 0
+		}
+		left := dfs(current.Left)
+		right := dfs(current.Right)
+		maxVal = max(maxVal, left+right)
+		return max(left, right) + 1
+	}
+	dfs(root)
+	return maxVal
+}
+
+// LC 110
+func isBalancedTree(root *TreeNode) bool {
+	var dfs func(r *TreeNode) (bool, int)
+	dfs = func(r *TreeNode) (bool, int) {
+		if r == nil {
+			return true, 0
+		}
+		left, leftHeight := dfs(r.Left)
+		right, rightHeight := dfs(r.Right)
+		isBalanced := left && right && abs(leftHeight-rightHeight) <= 1
+		return isBalanced, max(leftHeight, rightHeight) + 1
+	}
+	res, _ := dfs(root)
+	return res
+}
+
+// LC 100
+func isSameTree(p *TreeNode, q *TreeNode) bool {
+	if p == nil && q == nil {
+		return true
+	}
+	if !(p != nil && q != nil) {
+		return false
+	}
+	if p.Val != q.Val {
+		return false
+	}
+	return isSameTree(p.Left, q.Left) && isSameTree(p.Right, q.Right)
+}
+
+// LC 572
+func isSubtree(root *TreeNode, subRoot *TreeNode) bool {
+	if root == nil {
+		return false
+	}
+	if subRoot == nil {
+		return true
+	}
+	if isSameTree(root, subRoot) {
+		return true
+	}
+	return isSubtree(root.Left, subRoot) || isSubtree(root.Right, subRoot)
+}
+
+// LC 108
+func sortedArrayToBST(nums []int) *TreeNode {
+	var dfs func(l, r int) *TreeNode
+	dfs = func(l, r int) *TreeNode {
+		if l > r {
+			return nil
+		}
+		mid := (l + r) / 2
+		root := &TreeNode{Val: nums[mid]}
+		root.Left = dfs(l, mid-1)
+		root.Right = dfs(mid+1, r)
+		return root
+	}
+	return dfs(0, len(nums)-1)
+}
+
+// LC 617
+func mergeTrees(root1 *TreeNode, root2 *TreeNode) *TreeNode {
+	if root1 == nil && root2 == nil {
+		return nil
+	}
+	v1, v2 := 0, 0
+	if root1 != nil {
+		v1 = root1.Val
+	}
+	if root2 != nil {
+		v2 = root2.Val
+	}
+	root := &TreeNode{Val: v1 + v2}
+	var left1, left2, right1, right2 *TreeNode
+	if root1 != nil {
+		left1 = root1.Left
+		right1 = root1.Right
+	}
+	if root2 != nil {
+		left2 = root2.Left
+		right2 = root2.Right
+	}
+	root.Left = mergeTrees(left1, left2)
+	root.Right = mergeTrees(right1, right2)
+	return root
+}
+
 // LC 116/117
 func connectNextRightToEachNode(root *TreeNode) *TreeNode {
 	if root == nil {
@@ -179,8 +350,23 @@ func connectNextRightToEachNode(root *TreeNode) *TreeNode {
 	return root
 }
 
+// LC 235
+func lowestCommonAncestor(root, p, q *TreeNode) *TreeNode {
+	cur := root
+	for cur != nil {
+		if p.Val > cur.Val && q.Val > cur.Val {
+			cur = cur.Right
+		} else if p.Val < cur.Val && q.Val < cur.Val {
+			cur = cur.Left
+		} else {
+			return cur
+		}
+	}
+	return cur
+}
+
 // LC 103
-func zigzagLevelOrder(root *TreeNode) [][]int {
+func ZigzagLevelOrder(root *TreeNode) [][]int {
 	res := [][]int{}
 	if root == nil {
 		return res

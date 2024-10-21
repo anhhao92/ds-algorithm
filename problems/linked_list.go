@@ -657,3 +657,181 @@ func swapNodes(head *ListNode, k int) *ListNode {
 	l.val, r.val = r.val, l.val
 	return head
 }
+
+// LC 2130
+func pairSum(head *ListNode) int {
+	res := 0
+	slow, fast := head, head
+	var prev *ListNode
+	// reverse half
+	for fast != nil && fast.next != nil {
+		fast = fast.next.next
+		tmp := slow.next
+		slow.next, prev = prev, slow
+		slow = tmp
+	}
+	for slow != nil {
+		res = max(res, prev.val+slow.val)
+		slow = slow.next
+		prev = prev.next
+	}
+	return res
+}
+
+// LC 24
+func swapPairs(head *ListNode) *ListNode {
+	dummy := &ListNode{next: head}
+	prev, cur := dummy, head
+	for cur != nil && cur.next != nil {
+		nextPairs := cur.next.next
+		second := cur.next
+		// reverse pairs (second, cur)
+		second.next = cur
+		cur.next = nextPairs
+		prev.next = second
+		// update prev -> cur
+		prev = cur
+		cur = nextPairs
+	}
+	return dummy.next
+}
+
+// LC 725
+func splitListToParts(head *ListNode, k int) []*ListNode {
+	cur, n := head, 0
+	for cur != nil {
+		n++
+		cur = cur.next
+	}
+	res := make([]*ListNode, k)
+	remainder := n % k
+	baseLen := n / k
+	cur = head
+	for i := 0; i < n && cur != nil; i++ {
+		res[i] = cur
+		length := baseLen
+		if remainder > 0 {
+			length++
+			remainder--
+		}
+		for j := 0; j < length-1 && cur != nil; j++ {
+			cur = cur.next
+		}
+		if cur != nil {
+			tmp := cur.next
+			cur.next = nil
+			cur = tmp
+		}
+	}
+	return res
+}
+
+// LC 1472
+type (
+	BrowserHistory struct {
+		head *DoublyNode
+	}
+	DoublyNode struct {
+		val  string
+		prev *DoublyNode
+		next *DoublyNode
+	}
+)
+
+func NewBrowserHistory(homepage string) BrowserHistory {
+	return BrowserHistory{&DoublyNode{val: homepage}}
+}
+
+func (this *BrowserHistory) Visit(url string) {
+	this.head.next = &DoublyNode{val: url, prev: this.head}
+	this.head = this.head.next
+}
+
+func (this *BrowserHistory) Back(steps int) string {
+	for this.head.prev != nil && steps > 0 {
+		this.head = this.head.prev
+		steps--
+	}
+	return this.head.val
+}
+
+func (this *BrowserHistory) Forward(steps int) string {
+	for this.head.next != nil && steps > 0 {
+		this.head = this.head.next
+		steps--
+	}
+	return this.head.val
+}
+
+// LC 707
+type MyLinkedList struct {
+	head *DoublyListNode
+	tail *DoublyListNode
+}
+
+func NewMyLinkedList() MyLinkedList {
+	h := &DoublyListNode{}
+	t := &DoublyListNode{}
+	h.next = t
+	t.prev = h
+	return MyLinkedList{h, t}
+}
+
+func (this *MyLinkedList) Get(index int) int {
+	cur := this.head.next
+	for cur != nil && index > 0 {
+		cur = cur.next
+		index--
+	}
+	if cur != nil && cur != this.tail && index == 0 {
+		return cur.val
+	}
+	return -1
+}
+
+func (this *MyLinkedList) AddAtHead(val int) {
+	node := &DoublyListNode{val: val}
+	next, prev := this.head.next, this.head
+	node.next = next
+	node.prev = prev
+	prev.next = node
+	next.prev = node
+}
+
+func (this *MyLinkedList) AddAtTail(val int) {
+	node := &DoublyListNode{val: val}
+	next, prev := this.tail, this.tail.prev
+	prev.next = node
+	next.prev = node
+	node.next = next
+	node.prev = prev
+}
+
+func (this *MyLinkedList) AddAtIndex(index int, val int) {
+	cur := this.head.next
+	for cur != nil && index > 0 {
+		cur = cur.next
+		index--
+	}
+	if cur != nil && index == 0 {
+		node := &DoublyListNode{val: val}
+		next, prev := cur, cur.prev
+		node.next = next
+		node.prev = prev
+		prev.next = node
+		next.prev = node
+	}
+}
+
+func (this *MyLinkedList) DeleteAtIndex(index int) {
+	cur := this.head.next
+	for cur != nil && index > 0 {
+		cur = cur.next
+		index--
+	}
+	if cur != nil && cur != this.tail && index == 0 {
+		next, prev := cur.next, cur.prev
+		prev.next = next
+		next.prev = prev
+	}
+}

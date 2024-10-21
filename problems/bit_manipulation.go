@@ -93,6 +93,29 @@ func FindRepeatedDnaSequences(s string) []string {
 	return res
 }
 
+// LC 1684
+func countConsistentStrings(allowed string, words []string) int {
+	allowedBits := 0
+	for i := 0; i < len(allowed); i++ {
+		allowedBits ^= 1 << (allowed[i] - 'a')
+	}
+	count := 0
+	for _, w := range words {
+		isConsistent := true
+		for i := 0; i < len(w); i++ {
+			b := 1 << (w[i] - 'a')
+			if b&allowedBits == 0 {
+				isConsistent = false
+				break
+			}
+		}
+		if isConsistent {
+			count++
+		}
+	}
+	return count
+}
+
 // LC 136
 func singleNumber(nums []int) int {
 	v := 0
