@@ -14,6 +14,36 @@ func abs(a int) int {
 	return a
 }
 
+// LC 921
+func sortArray(nums []int) []int {
+	if len(nums) <= 1 {
+		return nums
+	}
+	mid := len(nums) / 2
+	left := sortArray(nums[:mid])
+	right := sortArray(nums[mid:])
+	mergedArray := make([]int, 0, len(nums))
+	l, r := 0, 0
+	for l < len(left) && r < len(right) {
+		if left[l] < right[r] {
+			mergedArray = append(mergedArray, left[l])
+			l++
+		} else {
+			mergedArray = append(mergedArray, right[r])
+			r++
+		}
+	}
+	for l < len(left) {
+		mergedArray = append(mergedArray, left[l])
+		l++
+	}
+	for r < len(right) {
+		mergedArray = append(mergedArray, right[r])
+		r++
+	}
+	return mergedArray
+}
+
 // LC 539
 func FindMinDifference(timePoints []string) int {
 	maxMinute, minMinute := 0, 24*60

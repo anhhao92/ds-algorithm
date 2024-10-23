@@ -256,3 +256,35 @@ func MedianSlidingWindow(nums []int, k int) []float64 {
 
 	return result
 }
+
+// LC 2583
+func kthLargestLevelSum(root *TreeNode, k int) int64 {
+	queue := []*TreeNode{root}
+	minHeap := &IntHeap{}
+	for len(queue) > 0 {
+		sum := 0
+		for _, node := range queue {
+			queue = queue[1:]
+			if node != nil {
+				sum += node.Val
+				if node.Left != nil {
+					queue = append(queue, node.Left)
+				}
+				if node.Right != nil {
+					queue = append(queue, node.Right)
+				}
+			}
+		}
+
+		if minHeap.Len() == k && sum > (*minHeap)[0] {
+			heap.Pop(minHeap)
+			heap.Push(minHeap, sum)
+		} else if minHeap.Len() < k {
+			heap.Push(minHeap, sum)
+		}
+	}
+	if minHeap.Len() < k {
+		return -1
+	}
+	return int64((*minHeap)[0])
+}

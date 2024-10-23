@@ -265,6 +265,21 @@ func isSameTree(p *TreeNode, q *TreeNode) bool {
 	return isSameTree(p.Left, q.Left) && isSameTree(p.Right, q.Right)
 }
 
+// LC 101
+func isSymmetric(root *TreeNode) bool {
+	var dfs func(l *TreeNode, r *TreeNode) bool
+	dfs = func(l *TreeNode, r *TreeNode) bool {
+		if l == nil && r == nil {
+			return true
+		}
+		if l == nil || r == nil {
+			return false
+		}
+		return l.Val == r.Val && dfs(l.Left, r.Right) && dfs(l.Right, r.Left)
+	}
+	return dfs(root.Left, root.Right)
+}
+
 // LC 572
 func isSubtree(root *TreeNode, subRoot *TreeNode) bool {
 	if root == nil {
@@ -293,6 +308,66 @@ func sortedArrayToBST(nums []int) *TreeNode {
 		return root
 	}
 	return dfs(0, len(nums)-1)
+}
+
+// LC 230
+func kthSmallest(root *TreeNode, k int) int {
+	stack := []*TreeNode{}
+	cur := root
+	// inorder traversal
+	for root != nil {
+		// go to the most left
+		for cur != nil {
+			stack = append(stack, cur)
+			cur = cur.Left
+		}
+		if len(stack) == 0 {
+			break
+		}
+		// visit root node
+		cur = stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		if k == 1 {
+			return cur.Val
+		}
+		k--
+		// visit right node
+		cur = cur.Right
+	}
+	return -1
+}
+
+// LC 105
+func buildTreeFromPreorderAndInorder(preorder []int, inorder []int) *TreeNode {
+	if len(preorder) == 0 || len(inorder) == 0 {
+		return nil
+	}
+	root := &TreeNode{Val: preorder[0]}
+	mid := slices.Index(inorder, preorder[0])
+	root.Left = buildTreeFromPreorderAndInorder(preorder[1:mid+1], inorder[:mid])
+	root.Right = buildTreeFromPreorderAndInorder(preorder[mid+1:], inorder[mid+1:])
+	return root
+}
+
+// LC 106
+func buildTree(inorder []int, postorder []int) *TreeNode {
+	inorderValToIndex := map[int]int{}
+	for i, v := range inorder {
+		inorderValToIndex[v] = i
+	}
+	var build func(l, r int) *TreeNode
+	build = func(l, r int) *TreeNode {
+		if l > r {
+			return nil
+		}
+		root := &TreeNode{Val: postorder[len(postorder)-1]}
+		index := inorderValToIndex[root.Val]
+		postorder = postorder[:len(postorder)-1]
+		root.Right = build(index+1, r)
+		root.Left = build(l, index-1)
+		return root
+	}
+	return build(0, len(inorder)-1)
 }
 
 // LC 617
@@ -365,6 +440,44 @@ func lowestCommonAncestor(root, p, q *TreeNode) *TreeNode {
 	return cur
 }
 
+// LC 199
+func rightSideView(root *TreeNode) []int {
+	queue := []*TreeNode{root}
+	res := []int{}
+	for len(queue) > 0 {
+		var rightNode *TreeNode
+		for _, node := range queue {
+			queue = queue[1:]
+			if node != nil {
+				rightNode = node
+				queue = append(queue, node.Left)
+				queue = append(queue, node.Right)
+			}
+		}
+		if rightNode != nil {
+			res = append(res, rightNode.Val)
+		}
+	}
+	return res
+}
+
+// LC 1448
+func goodNodes(root *TreeNode) int {
+	var dfs func(node *TreeNode, prev int) int
+	dfs = func(node *TreeNode, prev int) int {
+		if node == nil {
+			return 0
+		}
+		count := 0
+		if node.Val >= prev {
+			count = 1
+			prev = node.Val
+		}
+		return dfs(node.Left, prev) + dfs(node.Right, prev) + count
+	}
+	return dfs(root, root.Val)
+}
+
 // LC 103
 func ZigzagLevelOrder(root *TreeNode) [][]int {
 	res := [][]int{}
@@ -393,6 +506,38 @@ func ZigzagLevelOrder(root *TreeNode) [][]int {
 		isLeftToRight = !isLeftToRight
 	}
 	return res
+}
+
+// LC 337
+func RobHouseIII(root *TreeNode) int {
+	var dfs func(r *TreeNode) (int, int) // withRoot, withoutRoot
+	dfs = func(r *TreeNode) (int, int) {
+		if r == nil {
+			return 0, 0
+		}
+		left, withoutLeft := dfs(r.Left)
+		right, withoutRight := dfs(r.Right)
+		withRoot := r.Val + withoutLeft + withoutRight
+		withoutRoot := max(left, withoutLeft) + max(right, withoutRight)
+		return withRoot, withoutRoot
+	}
+	return max(dfs(root))
+}
+
+// LC 129
+func sumNumbers(root *TreeNode) int {
+	var dfs func(r *TreeNode, val int) int
+	dfs = func(r *TreeNode, val int) int {
+		if r == nil {
+			return 0
+		}
+		sum := val*10 + r.Val
+		if r.Left == nil && r.Right == nil {
+			return sum
+		}
+		return dfs(r.Left, sum) + dfs(r.Right, sum)
+	}
+	return dfs(root, 0)
 }
 
 // LC173

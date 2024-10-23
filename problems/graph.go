@@ -1454,3 +1454,28 @@ func closestMeetingNode(edges []int, node1 int, node2 int) int {
 	}
 	return minNode
 }
+
+// LC 1443
+func minTimeToCollectApples(n int, edges [][]int, hasApple []bool) int {
+	adj := make([][]int, n)
+	for _, e := range edges {
+		src, dst := e[0], e[1]
+		adj[src] = append(adj[src], dst)
+		adj[dst] = append(adj[dst], src)
+	}
+	var dfs func(node int, parent int) int
+	dfs = func(node, parent int) int {
+		time := 0
+		for _, child := range adj[node] {
+			if child == parent {
+				continue
+			}
+			childTime := dfs(child, node)
+			if childTime > 0 || hasApple[child] {
+				time += 2 + childTime
+			}
+		}
+		return time
+	}
+	return dfs(0, -1)
+}

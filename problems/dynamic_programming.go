@@ -473,7 +473,7 @@ func countPalindromeSubstrings(s string) int {
 	return count
 }
 
-func rob(nums []int) int {
+func RobHouse(nums []int) int {
 	rob1, rob2 := 0, 0
 	for i := 0; i < len(nums); i++ {
 		newRob := max(nums[i]+rob1, rob2)
@@ -483,8 +483,8 @@ func rob(nums []int) int {
 	return rob2
 }
 
-func rob2(nums []int) int {
-	return max(nums[0], rob(nums[1:]), rob(nums[:len(nums)-1]))
+func RobHouseII(nums []int) int {
+	return max(nums[0], RobHouse(nums[1:]), RobHouse(nums[:len(nums)-1]))
 }
 
 // LC740
