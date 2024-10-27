@@ -2028,3 +2028,21 @@ func minDays(n int) int {
 	}
 	return dfs(n)
 }
+
+// LC 96
+func numOfUniqBinaryTrees(n int) int {
+	numTree := make([]int, n+1)
+	numTree[0] = 1
+	numTree[1] = 1
+	for nodes := 2; nodes < n+1; nodes++ {
+		total := 0
+		// node 1 2 3
+		for root := 1; root < nodes+1; root++ {
+			left := root - 1
+			right := nodes - root
+			total += numTree[left] * numTree[right]
+		}
+		numTree[nodes] = total
+	}
+	return numTree[n]
+}

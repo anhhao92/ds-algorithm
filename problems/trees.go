@@ -2,6 +2,7 @@ package problems
 
 import (
 	"fmt"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -16,8 +17,7 @@ type TreeNode struct {
 
 // LC98
 func isValidBST(root *TreeNode) bool {
-	prev := 0
-	isInitValue := false
+	var prev *TreeNode
 	var dfs func(cur *TreeNode) bool
 	dfs = func(cur *TreeNode) bool {
 		if cur == nil {
@@ -28,17 +28,114 @@ func isValidBST(root *TreeNode) bool {
 			return false
 		}
 		// inorder traversal
-		if !isInitValue {
-			prev = cur.Val
-			isInitValue = true
-		} else if prev >= cur.Val {
+		if prev != nil && prev.Val >= cur.Val {
 			return false
 		}
-		prev = cur.Val
+		prev = cur
 		right := dfs(cur.Right)
 		return right
 	}
 	return dfs(root)
+}
+
+// LC 958
+func isCompleteTree(root *TreeNode) bool {
+	queue := []*TreeNode{root}
+	for len(queue) > 0 {
+		q := queue[0]
+		queue = queue[1:]
+		if q != nil {
+			queue = append(queue, q.Left)
+			queue = append(queue, q.Right)
+		} else {
+			for len(queue) > 0 {
+				node := queue[0]
+				queue = queue[1:]
+				if node != nil {
+					return false
+				}
+			}
+		}
+	}
+	return true
+}
+
+// LC 662
+func widthOfBinaryTree(root *TreeNode) int {
+	queue := [][3]any{{root, 1, 0}}
+	res := 0
+	prevNum, prevLevel := 1, 0
+	for len(queue) > 0 {
+		q := queue[0]
+		node, num, level := q[0].(*TreeNode), q[1].(int), q[2].(int)
+		queue = queue[1:]
+		if level > prevLevel {
+			prevLevel = level
+			prevNum = num
+		}
+		res = max(res, num-prevNum+1)
+		if node.Left != nil {
+			queue = append(queue, [3]any{node.Left, num * 2, level + 1})
+		}
+		if node.Right != nil {
+			queue = append(queue, [3]any{node.Right, num*2 + 1, level + 1})
+		}
+	}
+	return res
+}
+
+// LC 513
+func findBottomLeftValue(root *TreeNode) int {
+	queue := []*TreeNode{root}
+	current := root
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+		// visit right first
+		if current.Right != nil {
+			queue = append(queue, current.Right)
+		}
+		if current.Left != nil {
+			queue = append(queue, current.Left)
+		}
+	}
+	return current.Val
+}
+
+// LC 669
+func trimBST(root *TreeNode, low int, high int) *TreeNode {
+	if root == nil {
+		return root
+	}
+	if root.Val > high {
+		return trimBST(root.Left, low, high)
+	}
+	if root.Val < low {
+		return trimBST(root.Right, low, high)
+	}
+	root.Left = trimBST(root.Left, low, high)
+	root.Right = trimBST(root.Right, low, high)
+	return root
+}
+
+// LC 872
+func leafSimilar(root1 *TreeNode, root2 *TreeNode) bool {
+	var dfs func(r *TreeNode, leaf *[]int)
+	dfs = func(r *TreeNode, leaf *[]int) {
+		if r == nil {
+			return
+		}
+		if r.Left == nil && r.Right == nil {
+			*leaf = append(*leaf, r.Val)
+			return
+		}
+		dfs(r.Left, leaf)
+		dfs(r.Right, leaf)
+	}
+	l1, l2 := []int{}, []int{}
+	dfs(root1, &l1)
+	dfs(root2, &l2)
+	return slices.Equal(l1, l2)
 }
 
 // LC 124
@@ -370,6 +467,26 @@ func buildTree(inorder []int, postorder []int) *TreeNode {
 	return build(0, len(inorder)-1)
 }
 
+// LC 652
+func findDuplicateSubtrees(root *TreeNode) []*TreeNode {
+	hashMap := map[string]int{}
+	res := []*TreeNode{}
+	var dfs func(r *TreeNode) string
+	dfs = func(r *TreeNode) string {
+		if r == nil {
+			return "x"
+		}
+		s := fmt.Sprintf("%v,%s,%s", r.Val, dfs(r.Left), dfs(r.Right))
+		if hashMap[s] == 1 {
+			res = append(res, r)
+		}
+		hashMap[s]++
+		return s
+	}
+	dfs(root)
+	return res
+}
+
 // LC 617
 func mergeTrees(root1 *TreeNode, root2 *TreeNode) *TreeNode {
 	if root1 == nil && root2 == nil {
@@ -540,6 +657,76 @@ func sumNumbers(root *TreeNode) int {
 	return dfs(root, 0)
 }
 
+// LC 95
+func GenerateUniqueTrees(n int) []*TreeNode {
+	var generate func(l, r int) []*TreeNode
+	generate = func(l, r int) []*TreeNode {
+		if l > r {
+			return []*TreeNode{nil}
+		}
+		res := []*TreeNode{}
+		for val := l; val <= r; val++ {
+			for _, leftTree := range generate(l, val-1) {
+				for _, rightTree := range generate(val+1, r) {
+					root := &TreeNode{Val: val, Left: leftTree, Right: rightTree}
+					res = append(res, root)
+				}
+			}
+		}
+		return res
+	}
+	return generate(1, n)
+}
+
+// LC 894
+func allPossibleFBT(n int) []*TreeNode {
+	dp := map[int][]*TreeNode{}
+	var dfs func(num int) []*TreeNode
+	dfs = func(num int) []*TreeNode {
+		if num%2 == 0 {
+			return []*TreeNode{}
+		}
+		if num == 1 {
+			return []*TreeNode{{Val: 0}}
+		}
+		if v, ok := dp[num]; ok {
+			return v
+		}
+		res := []*TreeNode{}
+		for i := 1; i < num; i++ {
+			leftTrees := dfs(i)
+			rightTrees := dfs(num - i - 1)
+			for _, l := range leftTrees {
+				for _, r := range rightTrees {
+					root := &TreeNode{Val: 0, Left: l, Right: r}
+					res = append(res, root)
+				}
+			}
+		}
+		dp[n] = res
+		return res
+	}
+	return dfs(n)
+}
+
+// LC 951
+func flipEquiv(root1 *TreeNode, root2 *TreeNode) bool {
+	if root1 == nil && root2 == nil {
+		return true
+	}
+	// Just one of the trees is empty
+	if root1 == nil || root2 == nil {
+		return false
+	}
+	if root1.Val != root2.Val {
+		return false
+	}
+	if flipEquiv(root1.Left, root2.Left) && flipEquiv(root1.Right, root2.Right) {
+		return true
+	}
+	return flipEquiv(root1.Left, root2.Right) && flipEquiv(root1.Right, root2.Left)
+}
+
 // LC173
 type BSTIterator struct {
 	stack []*TreeNode
@@ -571,4 +758,194 @@ func (this *BSTIterator) Next() int {
 
 func (this *BSTIterator) HasNext() bool {
 	return len(this.stack) > 0
+}
+
+// LC 606
+func tree2str(root *TreeNode) string {
+	if root == nil {
+		return ""
+	}
+	left := tree2str(root.Left)
+	right := tree2str(root.Right)
+
+	if left == "" && right == "" {
+		return fmt.Sprintf("%d", root.Val)
+	}
+	if right == "" {
+		return fmt.Sprintf("%d(%s)", root.Val, left)
+	}
+	return fmt.Sprintf("%d(%s)(%s)", root.Val, left, right)
+}
+
+// LC 1457
+func pseudoPalindromicPaths(root *TreeNode) int {
+	odd := 0
+	count := [10]int{}
+	var dfs func(r *TreeNode) int
+	dfs = func(r *TreeNode) int {
+		if r == nil {
+			return 0
+		}
+		count[r.Val]++
+		oddChange := -1
+		if count[r.Val]%2 == 1 {
+			oddChange = 1
+		}
+		odd += oddChange
+		res := 0
+		if r.Left == nil && r.Right == nil {
+			if odd <= 1 {
+				res = 1
+			}
+		} else {
+			res = dfs(r.Left) + dfs(r.Right)
+		}
+		odd -= oddChange
+		count[r.Val]--
+		return res
+	}
+	return dfs(root)
+}
+
+// LC 1361
+func validateBinaryTreeNodes(n int, leftChild []int, rightChild []int) bool {
+	hasParent := map[int]bool{}
+	for _, v := range leftChild {
+		if v != -1 {
+			hasParent[v] = true
+		}
+	}
+	for _, v := range rightChild {
+		if v != -1 {
+			hasParent[v] = true
+		}
+	}
+	if len(hasParent) == n {
+		return false
+	}
+	root := -1
+	for i := range n {
+		if _, ok := hasParent[i]; !ok {
+			root = i
+			break
+		}
+	}
+	visited := map[int]bool{}
+	var dfs func(i int) bool
+	dfs = func(i int) bool {
+		if i == -1 {
+			return true
+		}
+		if visited[i] {
+			return false
+		}
+		visited[i] = true
+		return dfs(leftChild[i]) && dfs(rightChild[i])
+	}
+	return dfs(root) && len(visited) == n
+}
+
+// LC 1325
+func removeLeafNodes(root *TreeNode, target int) *TreeNode {
+	if root == nil {
+		return nil
+	}
+	// Postorder traversal
+	root.Left = removeLeafNodes(root.Left, target)
+	root.Right = removeLeafNodes(root.Right, target)
+	if root.Left == nil && root.Right == nil && root.Val == target {
+		return nil
+	}
+	return root
+}
+
+// LC 538
+func convertBST(root *TreeNode) *TreeNode {
+	sum := 0
+	var dfs func(r *TreeNode)
+	dfs = func(r *TreeNode) {
+		if r == nil {
+			return
+		}
+		// right - root - left
+		dfs(r.Right)
+		tmp := r.Val
+		r.Val += sum
+		sum += tmp
+		dfs(r.Left)
+	}
+	dfs(root)
+	return root
+}
+
+// LC 979
+func distributeCoins(root *TreeNode) int {
+	res := 0
+	var dfs func(r *TreeNode) (int, int)
+	dfs = func(r *TreeNode) (int, int) {
+		if r == nil {
+			return 0, 0
+		}
+		leftSize, leftCoin := dfs(r.Left)
+		rightSize, rightCoin := dfs(r.Right)
+		size := 1 + leftSize + rightSize
+		coin := r.Val + leftCoin + rightCoin
+		res += int(math.Abs(float64(size - coin)))
+		return size, coin
+	}
+	dfs(root)
+	return res
+}
+
+// LC 988
+func smallestFromLeaf(root *TreeNode) string {
+	var dfs func(r *TreeNode, prev string) string
+	dfs = func(r *TreeNode, prev string) string {
+		if r == nil {
+			return ""
+		}
+		prev = string(r.Val+'a') + prev
+		if r.Left != nil && r.Right != nil {
+			left := dfs(r.Left, prev)
+			right := dfs(r.Right, prev)
+			return min(left, right)
+		}
+		if r.Right != nil {
+			return dfs(r.Right, prev)
+		}
+		if r.Left != nil {
+			return dfs(r.Left, prev)
+		}
+		return prev
+	}
+	return dfs(root, "")
+}
+
+// LC 1609
+func isEvenOddTree(root *TreeNode) bool {
+	queue := []*TreeNode{root}
+	isOdd := true
+	for len(queue) > 0 {
+		prev := math.MaxInt32
+		if isOdd {
+			prev = math.MinInt32
+		}
+		for _, q := range queue {
+			if isOdd && (q.Val%2 == 0 || q.Val <= prev) {
+				return false
+			} else if !isOdd && (q.Val%2 == 1 || q.Val >= prev) {
+				return false
+			}
+			if q.Left != nil {
+				queue = append(queue, q.Left)
+			}
+			if q.Right != nil {
+				queue = append(queue, q.Right)
+			}
+			queue = queue[1:]
+			prev = q.Val
+		}
+		isOdd = !isOdd
+	}
+	return true
 }

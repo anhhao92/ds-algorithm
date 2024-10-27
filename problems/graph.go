@@ -1472,10 +1472,31 @@ func minTimeToCollectApples(n int, edges [][]int, hasApple []bool) int {
 			}
 			childTime := dfs(child, node)
 			if childTime > 0 || hasApple[child] {
-				time += 2 + childTime
+				time += 2 + childTime // go down and back up
 			}
 		}
 		return time
 	}
 	return dfs(0, -1)
+}
+
+// LC 1376
+func numOfMinutesInformEmployees(n int, headID int, manager []int, informTime []int) int {
+	adj := make([][]int, n)
+	for i := range n {
+		if manager[i] != -1 {
+			adj[manager[i]] = append(adj[manager[i]], i)
+		}
+	}
+	queue := [][2]int{{headID, 0}} // employee, time
+	res := 0
+	for len(queue) > 0 {
+		managerID, time := queue[0][0], queue[0][1]
+		queue = queue[1:]
+		res = max(res, time)
+		for _, e := range adj[managerID] {
+			queue = append(queue, [2]int{e, informTime[managerID] + time})
+		}
+	}
+	return res
 }
