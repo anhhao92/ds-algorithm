@@ -75,6 +75,23 @@ func reverseKGroup(head *ListNode, k int) *ListNode {
 	return dummy.next
 }
 
+func detectCycle(head *ListNode) *ListNode {
+	slow, fast := head, head
+	for fast != nil && fast.next != nil {
+		slow = slow.next
+		fast = fast.next.next
+
+		if slow == fast {
+			for head != slow {
+				head = head.next
+				slow = slow.next
+			}
+			return head
+		}
+	}
+	return nil
+}
+
 // LC 287 Floyd's cycle detection
 func FindDuplicate(nums []int) int {
 	slow, fast := 0, 0

@@ -44,6 +44,55 @@ func sortArray(nums []int) []int {
 	return mergedArray
 }
 
+// LC 1189
+func maxNumberOfBalloons(text string) int {
+	var b, a, l, o, n int
+	for _, c := range text {
+		switch c {
+		case 'b':
+			b++
+		case 'a':
+			a++
+		case 'l':
+			l++
+		case 'o':
+			o++
+		case 'n':
+			n++
+		}
+	}
+	return min(b, a, l/2, o/2, n)
+}
+
+// 290
+func wordPattern(pattern string, s string) bool {
+	words := strings.Split(s, " ")
+	if len(words) != len(pattern) {
+		return false
+	}
+	charToWord := map[byte]string{}
+	wordToChar := map[string]byte{}
+	for i, w := range words {
+		c := pattern[i]
+		if word, ok := charToWord[c]; ok {
+			if word != w {
+				return false
+			}
+		} else {
+			charToWord[c] = w
+		}
+
+		if char, ok := wordToChar[w]; ok {
+			if char != c {
+				return false
+			}
+		} else {
+			wordToChar[w] = c
+		}
+	}
+	return true
+}
+
 // LC 539
 func FindMinDifference(timePoints []string) int {
 	maxMinute, minMinute := 0, 24*60
@@ -432,7 +481,7 @@ func getSumAbsoluteDifferences(nums []int) []int {
 	return res
 }
 
-// LC41
+// LC41/LC645
 func firstMissingPositive(nums []int) int {
 	n := len(nums)
 	// we're going to use negative and zero in nums to optimize space complexity

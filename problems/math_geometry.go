@@ -417,3 +417,21 @@ func countPrimes(n int) int {
 	}
 	return count
 }
+
+// LC 6
+func convertZigZag(s string, numRows int) string {
+	if numRows == 1 {
+		return s
+	}
+	var sb strings.Builder
+	for r := range numRows {
+		inc := 2 * (numRows - 1)
+		for i := r; i < len(s); i += inc {
+			sb.WriteByte(s[i])
+			if r > 0 && r < numRows-1 && i+inc-2*r < len(s) {
+				sb.WriteByte(s[i+inc-2*r])
+			}
+		}
+	}
+	return sb.String()
+}
