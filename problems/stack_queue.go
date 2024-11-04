@@ -155,7 +155,6 @@ func CalculateComplex(s string) int {
 	prev := 0
 	sum := 0
 	stack := []int{}
-
 	for i := 0; i < len(s); i++ {
 		if s[i] == ' ' {
 			continue
@@ -234,64 +233,51 @@ func dailyTemperatures(temperatures []int) []int {
 	return res
 }
 
-func nextGreaterElementI(nums1 []int, nums2 []int) []int {
-	table := map[int]int{}
+// LC 496 monotonic stack
+func NextGreaterElementI(nums1 []int, nums2 []int) []int {
+	numToIndex := map[int]int{}
 	res := make([]int, len(nums1))
-	stack := []int{}
-	for i := range nums2 {
-		for len(stack) > 0 {
-			topElement := stack[len(stack)-1]
-			if nums2[i] > topElement {
-				table[topElement] = nums2[i]
-				stack = stack[:len(stack)-1]
-				//res[index] = table[index]
-			} else {
-				break
-			}
+	stack := make([]int, 0, len(nums1))
+	for i, n := range nums1 {
+		res[i] = -1
+		numToIndex[n] = i
+	}
+	for _, n2 := range nums2 {
+		for len(stack) > 0 && n2 > stack[len(stack)-1] {
+			n1 := stack[len(stack)-1] // next greater of n1 is n2
+			i := numToIndex[n1]
+			res[i] = n2
+			stack = stack[:len(stack)-1]
 		}
-		stack = append(stack, i)
-	}
-	for len(stack) > 0 {
-		topElement := stack[len(stack)-1]
-		table[topElement] = -1
-	}
-	for i := range res {
-		res[i] = table[nums1[i]]
+		if _, ok := numToIndex[n2]; ok {
+			stack = append(stack, n2)
+		}
 	}
 	return res
 }
 
-func nextGreaterElements(nums []int) []int {
+// LC 503 monotonic stack
+func NextGreaterElementII(nums []int) []int {
 	res := make([]int, len(nums))
-	stack := []int{}
+	stack := make([]int, 0, len(nums))
 	for i := range res {
 		res[i] = -1
 	}
-	for i := range nums {
-		for len(stack) > 0 {
-			index := stack[len(stack)-1]
-			if nums[i] > nums[index] {
-				stack = stack[:len(stack)-1]
-				res[index] = nums[i]
-			} else {
-				break
-			}
+	for i, n := range nums {
+		for len(stack) > 0 && n > nums[stack[len(stack)-1]] {
+			res[stack[len(stack)-1]] = n
+			stack = stack[:len(stack)-1]
 		}
 		stack = append(stack, i)
 	}
-
-	for i := range nums {
-		for len(stack) > 0 {
-			index := stack[len(stack)-1]
-			if nums[i] > nums[index] {
-				stack = stack[:len(stack)-1]
-				res[index] = nums[i]
-			} else {
-				break
-			}
+	// second pass to clear circle array
+	for _, n := range nums {
+		for len(stack) > 0 && n > nums[stack[len(stack)-1]] {
+			res[stack[len(stack)-1]] = n
+			stack = stack[:len(stack)-1]
 		}
 		if len(stack) == 0 {
-			break
+			return res
 		}
 	}
 	return res

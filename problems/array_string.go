@@ -2,6 +2,7 @@ package problems
 
 import (
 	"math"
+	"math/rand/v2"
 	"slices"
 	"strconv"
 	"strings"
@@ -88,6 +89,23 @@ func wordPattern(pattern string, s string) bool {
 			}
 		} else {
 			wordToChar[w] = c
+		}
+	}
+	return true
+}
+
+// 1897
+func redistributeStringMakeEqual(words []string) bool {
+	var chSet [26]int
+	for _, w := range words {
+		for _, r := range w {
+			chSet[r-'a']++
+		}
+	}
+	n := len(words)
+	for _, c := range chSet {
+		if c%n != 0 {
+			return false
 		}
 	}
 	return true
@@ -723,6 +741,7 @@ func minSwaps(s string) int {
 		maxClose = max(maxClose, close)
 
 	}
+	// (maxClose+1) cause 1 swap fixes 2 pairs
 	return (maxClose + 1) / 2
 }
 
@@ -945,4 +964,133 @@ func arrayRankTransform(arr []int) []int {
 		arr[i] = hashMap[arr[i]]
 	}
 	return arr
+}
+
+// LC 605
+func canPlaceFlowers(flowerbed []int, n int) bool {
+	c := 0
+	for i := 0; i < len(flowerbed); i++ {
+		if flowerbed[i] == 0 {
+			leftEmpty := i == 0 || flowerbed[i-1] == 0
+			rightEmpty := i == len(flowerbed)-1 || flowerbed[i+1] == 0
+			if leftEmpty && rightEmpty {
+				c++
+				flowerbed[i] = 1
+			}
+		}
+	}
+	return c >= n
+}
+
+func NumUniqueEmails(emails []string) int {
+	uniq := map[string]bool{}
+	for _, e := range emails {
+		parts := strings.Split(e, "@")
+		local, domain := parts[0], parts[1]
+		local = strings.Split(local, "+")[0]
+		local = strings.ReplaceAll(local, ".", "")
+		uniq[local+"@"+domain] = true
+	}
+	return len(uniq)
+}
+
+// 1700
+func countStudents(students []int, sandwiches []int) int {
+	res := len(students)
+	count := map[int]int{}
+	for _, s := range students {
+		count[s]++
+	}
+	for _, s := range sandwiches {
+		if count[s] > 0 {
+			res--
+			count[s]--
+		} else {
+			return res
+		}
+	}
+	return res
+}
+
+// LC 1608
+func specialArray(nums []int) int {
+	count := make([]int, len(nums)+1)
+	for _, n := range nums {
+		i := min(n, len(nums))
+		count[i]++
+	}
+	totalRight := 0
+	for i := len(nums); i >= 0; i-- {
+		totalRight += count[i]
+		if totalRight == i {
+			return totalRight
+		}
+	}
+
+	return -1
+}
+
+// LC 838
+func pushDominoes(dominoes string) string {
+	dom := []byte(dominoes)
+	queue := make([][2]int, 0, len(dom)/2)
+	for i, d := range dom {
+		if d != '.' {
+			queue = append(queue, [2]int{i, int(d)})
+		}
+	}
+	for len(queue) > 0 {
+		q := queue[0]
+		queue = queue[1:]
+		i, d := q[0], byte(q[1])
+		if d == 'L' && i > 0 && dom[i-1] == '.' {
+			queue = append(queue, [2]int{i - 1, int('L')})
+			dom[i-1] = 'L'
+		} else if d == 'R' && i+1 < len(dom) && dom[i+1] == '.' {
+			if i+2 < len(dom) && dom[i+2] == 'L' {
+				queue = queue[1:]
+			} else {
+				queue = append(queue, [2]int{i + 1, int('R')})
+				dom[i+1] = 'R'
+			}
+		}
+	}
+	return string(dom)
+}
+
+// LC 380
+type RandomizedSet struct {
+	hashMap map[int]int
+	list    []int
+}
+
+func NewRandomizedSet() RandomizedSet {
+	return RandomizedSet{make(map[int]int), []int{}}
+}
+
+func (this *RandomizedSet) Insert(val int) bool {
+	if _, ok := this.hashMap[val]; !ok {
+		this.list = append(this.list, val)
+		this.hashMap[val] = len(this.list) - 1
+		return true
+	}
+	return false
+}
+
+func (this *RandomizedSet) Remove(val int) bool {
+	if i, ok := this.hashMap[val]; ok {
+		last := this.list[len(this.list)-1]
+		this.list[i] = last
+		this.hashMap[last] = i
+		this.list = this.list[:len(this.list)-1]
+		// delete should be last operation because it covers the case only 1 item
+		delete(this.hashMap, val)
+		return true
+	}
+	return false
+}
+
+func (this *RandomizedSet) GetRandom() int {
+	i := rand.IntN(len(this.list))
+	return this.list[i]
 }

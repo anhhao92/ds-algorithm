@@ -155,12 +155,61 @@ func LeastInterval(tasks []byte, n int) int {
 	return time
 }
 
-/**
- * Your MedianFinder object will be instantiated and called as such:
- * obj := Constructor();
- * obj.AddNum(num);
- * param_2 := obj.FindMedian();
- */
+// LC 2353
+type (
+	FoodRatings struct {
+		foodRating  map[string]int         // food -> rating
+		foodCuisine map[string]string      // food -> cuisine
+		maxHeap     map[string]*Heap[Food] // cuisine -> maxHeap rating
+	}
+	Food struct {
+		rating int
+		food   string
+	}
+)
+
+func NewFoodRatings(foods []string, cuisines []string, ratings []int) FoodRatings {
+	foodMap := map[string]int{}
+	foodCuisine := map[string]string{}
+	maxHeap := make(map[string]*Heap[Food])
+	comparator := func(a, b Food) bool {
+		if a.rating == b.rating {
+			return a.food < b.food
+		}
+		return a.rating > b.rating
+	}
+	for i := range len(foods) {
+		foodMap[foods[i]] = ratings[i]
+		foodCuisine[foods[i]] = cuisines[i]
+		h := maxHeap[cuisines[i]]
+		if h == nil {
+			h = &Heap[Food]{comparator: comparator}
+			heap.Init(h)
+			maxHeap[cuisines[i]] = h
+		}
+		heap.Push(h, Food{ratings[i], foods[i]})
+	}
+	return FoodRatings{foodMap, foodCuisine, maxHeap}
+}
+
+func (this *FoodRatings) ChangeRating(food string, newRating int) {
+	this.foodRating[food] = newRating
+	cuisine := this.foodCuisine[food]
+	h := this.maxHeap[cuisine]
+	heap.Push(h, Food{newRating, food})
+}
+
+func (this *FoodRatings) HighestRated(cuisine string) string {
+	h := this.maxHeap[cuisine]
+	highestRating := h.Peak()
+	// this.foodRating is the single source rating
+	for h.Peak().rating != this.foodRating[highestRating.food] {
+		heap.Pop(h)
+		highestRating = h.Peak()
+	}
+	return highestRating.food
+}
+
 type MedianFinder struct {
 	minHeap IntHeap
 	maxHeap IntHeap

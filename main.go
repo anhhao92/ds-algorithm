@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	a := problems.ShortestBridge([][]int{{0, 1}, {1, 0}})
+	a := problems.NumUniqueEmails([]string{"test.email+alex@leetcode.com", "test.e.mail+bob.cathy@leetcode.com", "testemail+david@lee.tcode.com"})
 	fmt.Println("=>", a)
 }

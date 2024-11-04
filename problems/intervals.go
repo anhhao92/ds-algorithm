@@ -15,7 +15,7 @@ func MergeInterval(intervals [][]int) [][]int {
 		if intervals[i][0] <= lastEnd {
 			result[len(result)-1][1] = max(lastEnd, intervals[i][1])
 		} else {
-			result = append(result, []int{intervals[i][0], intervals[i][1]})
+			result = append(result, intervals[i])
 		}
 	}
 	return result
