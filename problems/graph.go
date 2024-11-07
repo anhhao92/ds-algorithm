@@ -1,10 +1,12 @@
 package problems
 
 import (
+	"container/heap"
 	"fmt"
 	"math"
 	"slices"
 	"sort"
+	"strings"
 )
 
 // LC 332
@@ -736,6 +738,51 @@ func largestPathValue(colors string, edges [][]int) int {
 		return res
 	}
 	return -1
+}
+
+// LC 269 Topological sort or dfs postorder
+func AlienDictionary(words []string) string {
+	indegree := make(map[byte]int)
+	adj := make(map[byte][]byte)
+	for i := 0; i < len(words)-1; i++ {
+		minLen := min(len(words[i]), len(words[i+1]))
+		if words[i][:minLen] == words[i+1][:minLen] && len(words[i]) > len(words[i+1]) {
+			return ""
+		}
+		for j := 0; j < minLen; j++ {
+			c1, c2 := words[i][j], words[i+1][j]
+			if c1 != c2 {
+				adj[c1] = append(adj[c1], c2)
+				indegree[c2]++
+				if _, ok := indegree[c1]; !ok {
+					indegree[c1] = 0
+				}
+				break
+			}
+		}
+	}
+	queue := []byte{}
+	for c, ind := range indegree {
+		if ind == 0 {
+			queue = append(queue, c)
+		}
+	}
+	var sb strings.Builder
+	for len(queue) > 0 {
+		src := queue[0]
+		queue = queue[1:]
+		sb.WriteByte(src)
+		for _, neighbor := range adj[src] {
+			indegree[neighbor]--
+			if indegree[neighbor] == 0 {
+				queue = append(queue, neighbor)
+			}
+		}
+	}
+	if sb.Len() != len(indegree) {
+		return ""
+	}
+	return sb.String()
 }
 
 // LC 2050
@@ -1499,4 +1546,241 @@ func numOfMinutesInformEmployees(n int, headID int, manager []int, informTime []
 		}
 	}
 	return res
+}
+
+// LC 778 Dijkstra + minHeap
+func SwimInWater(grid [][]int) int {
+	directions := [4][2]int{{0, 1}, {1, 0}, {0, -1}, {-1, 0}}
+	n := len(grid)
+	visited := make([][]bool, n)
+	for i := range visited {
+		visited[i] = make([]bool, n)
+	}
+	comparator := func(a, b [3]int) bool {
+		return a[0] < b[0]
+	}
+	minHeap := &Heap[[3]int]{comparator: comparator}
+	heap.Init(minHeap)
+	heap.Push(minHeap, [3]int{grid[0][0], 0, 0})
+	visited[0][0] = true
+	for minHeap.Len() > 0 {
+		cur := heap.Pop(minHeap).([3]int)
+		depth, r, c := cur[0], cur[1], cur[2]
+		if r == n-1 && c == n-1 {
+			return depth
+		}
+		for _, d := range directions {
+			dr, dc := r+d[0], c+d[1]
+			if min(dr, dc) < 0 || max(dr, dc) >= n || visited[dr][dc] {
+				continue
+			}
+			visited[dr][dc] = true
+			heap.Push(minHeap, [3]int{max(depth, grid[dr][dc]), dr, dc})
+		}
+	}
+	return -1
+}
+
+// LC 2812 Dijkstra + BFS multisource
+func MaximumSafenessFactor(grid [][]int) int {
+	n := len(grid)
+	directions := [4][2]int{{0, 1}, {1, 0}, {0, -1}, {-1, 0}}
+	queue := make([][3]int, 0, 2)
+	visited := make([][]bool, n)
+	for i, row := range grid {
+		visited[i] = make([]bool, n)
+		for j, v := range row {
+			if v == 1 {
+				queue = append(queue, [3]int{i, j, 0})
+				visited[i][j] = true
+			}
+		}
+	}
+	// calculate distance to the thief
+	for len(queue) > 0 {
+		r, c, dist := queue[0][0], queue[0][1], queue[0][2]
+		queue = queue[1:]
+		grid[r][c] = dist
+		for _, d := range directions {
+			dr, dc := r+d[0], c+d[1]
+			if min(dr, dc) < 0 || max(dr, dc) == n || visited[dr][dc] {
+				continue
+			}
+			visited[dr][dc] = true
+			queue = append(queue, [3]int{dr, dc, dist + 1})
+		}
+	}
+	for i := range visited {
+		clear(visited[i])
+	}
+	comparator := func(a, b [3]int) bool {
+		return a[0] > b[0]
+	}
+	maxHeap := &Heap[[3]int]{comparator: comparator}
+	heap.Init(maxHeap)
+	heap.Push(maxHeap, [3]int{grid[0][0], 0, 0}) // [dist, row, col]
+	visited[0][0] = true
+	for maxHeap.Len() > 0 {
+		item := heap.Pop(maxHeap).([3]int)
+		dist, r, c := item[0], item[1], item[2]
+		if r == n-1 && c == n-1 {
+			return dist
+		}
+		for _, d := range directions {
+			dr, dc := r+d[0], c+d[1]
+			if min(dr, dc) < 0 || max(dr, dc) == n || visited[dr][dc] {
+				continue
+			}
+			visited[dr][dc] = true
+			// the cell with greater than current cell will be visited first
+			// and maintain the min of current path in dist variable
+			heap.Push(maxHeap, [3]int{min(dist, grid[dr][dc]), dr, dc})
+		}
+	}
+	return -1
+}
+
+// LC 743 Dijkstras + minHeap
+func networkDelayTime(times [][]int, n int, k int) int {
+	adj := make(map[int][][2]int)
+	for _, t := range times {
+		u, v, w := t[0], t[1], t[2]
+		adj[u] = append(adj[u], [2]int{v, w})
+	}
+	comparator := func(a, b [2]int) bool {
+		return a[1] < b[1]
+	}
+	minHeap := &Heap[[2]int]{comparator: comparator}
+	heap.Init(minHeap)
+	heap.Push(minHeap, [2]int{k, 0}) // [node, dist]
+	distance := make([]int, n+1)
+	for i := range distance {
+		distance[i] = math.MaxInt32
+	}
+	distance[k] = 0
+	for minHeap.Len() > 0 {
+		item := heap.Pop(minHeap).([2]int)
+		node, dist := item[0], item[1]
+		if distance[node] < dist {
+			continue
+		}
+		for _, v := range adj[node] {
+			neighbor, time := v[0], v[1]
+			d := dist + time
+			if d < distance[neighbor] {
+				distance[neighbor] = d
+				heap.Push(minHeap, [2]int{neighbor, d})
+			}
+		}
+	}
+	res := 0
+	for i := 1; i < len(distance); i++ {
+		if distance[i] == math.MaxInt32 {
+			return -1
+		}
+		res = max(res, distance[i])
+	}
+
+	return res
+}
+
+// LC 1631 Dijkstra
+func MinimumEffortPath(heights [][]int) int {
+	n, m := len(heights), len(heights[0])
+	directions := [4][2]int{{0, 1}, {1, 0}, {0, -1}, {-1, 0}}
+	visited := make([][]bool, n)
+	for i := range visited {
+		visited[i] = make([]bool, m)
+	}
+	comparator := func(a, b [3]int) bool {
+		return a[2] < b[2]
+	}
+	minHeap := &Heap[[3]int]{comparator: comparator}
+	heap.Init(minHeap)
+	heap.Push(minHeap, [3]int{0, 0, 0}) // [row, col, dist]
+	for minHeap.Len() > 0 {
+		item := heap.Pop(minHeap).([3]int)
+		row, col, dist := item[0], item[1], item[2]
+		if visited[row][col] {
+			continue
+		}
+		if row == n-1 && col == m-1 {
+			return dist
+		}
+		visited[row][col] = true
+		for _, d := range directions {
+			dr, dc := row+d[0], col+d[1]
+			if min(dr, dc) < 0 || dr == n || dc == m || visited[dr][dc] {
+				continue
+			}
+			// should not mark node as visited inside here
+			// because we can push the same node multiple times to min heap
+			diff := max(dist, abs(heights[dr][dc]-heights[row][col]))
+			heap.Push(minHeap, [3]int{dr, dc, diff})
+		}
+	}
+	return -1
+}
+
+// LC 787 Shortest Path Faster
+func FindCheapestPrice(n int, flights [][]int, src int, dst int, k int) int {
+	adj := make(map[int][][2]int)
+	dist := make([]int, n)
+	for _, t := range flights {
+		u, v, w := t[0], t[1], t[2]
+		adj[u] = append(adj[u], [2]int{v, w})
+	}
+	for i := range dist {
+		dist[i] = math.MaxInt32
+	}
+	dist[src] = 0
+	queue := [][3]int{{src, 0, 0}}
+	for len(queue) > 0 {
+		src, cost, kStop := queue[0][0], queue[0][1], queue[0][2]
+		queue = queue[1:]
+		if kStop > k {
+			continue
+		}
+		for _, v := range adj[src] {
+			neighbor, neighborCost := v[0], v[1]
+			nextCost := cost + neighborCost
+			if nextCost < dist[neighbor] {
+				dist[neighbor] = nextCost
+				queue = append(queue, [3]int{neighbor, nextCost, kStop + 1})
+			}
+		}
+	}
+	if dist[dst] != math.MaxInt32 {
+		return dist[dst]
+	}
+	return -1
+}
+
+// LC 1514 Shortest Path Faster Algorithm
+func maxProbability(n int, edges [][]int, succProb []float64, start_node int, end_node int) float64 {
+	type Edge struct {
+		node        int
+		probability float64
+	}
+	adj := make(map[int][]Edge)
+	dist := make([]float64, n)
+	for i, t := range edges {
+		u, v, w := t[0], t[1], succProb[i]
+		adj[u] = append(adj[u], Edge{v, w})
+		adj[v] = append(adj[v], Edge{u, w})
+	}
+	queue := []int{start_node}
+	dist[start_node] = 1
+	for len(queue) > 0 {
+		src := queue[0]
+		queue = queue[1:]
+		for _, neighbor := range adj[src] {
+			nextProbability := dist[src] * neighbor.probability
+			if nextProbability > dist[neighbor.node] {
+				dist[neighbor.node] = nextProbability
+				queue = append(queue, neighbor.node)
+			}
+		}
+	}
+	return dist[end_node]
 }

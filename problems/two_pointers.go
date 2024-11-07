@@ -5,18 +5,21 @@ import (
 	"slices"
 )
 
+// LC 75
 func SortColors(nums []int) {
-	left, right, cur := 0, len(nums)-1, 0
-	for cur <= right {
-		if nums[cur] == 2 {
-			nums[cur], nums[right] = nums[right], nums[cur]
+	left, right, i := 0, len(nums)-1, 0
+	// 3 ways partition move 0 to the left, move 2 to the right and 1 in middle
+	for i <= right {
+		// we don't increase i when swap 2 because it will introduce 0 in middle
+		if nums[i] == 2 {
+			nums[i], nums[right] = nums[right], nums[i]
 			right--
-		} else if nums[cur] == 1 {
-			cur++
-		} else {
-			nums[cur], nums[left] = nums[left], nums[cur]
+		} else if nums[i] == 0 {
+			nums[i], nums[left] = nums[left], nums[i]
 			left++
-			cur++
+			i++
+		} else {
+			i++
 		}
 	}
 }

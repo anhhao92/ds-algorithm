@@ -1,6 +1,7 @@
 package problems
 
 import (
+	"fmt"
 	"math"
 	"math/rand/v2"
 	"slices"
@@ -43,6 +44,76 @@ func sortArray(nums []int) []int {
 		r++
 	}
 	return mergedArray
+}
+
+// LC 280
+func WiggleSortArray(nums []int) []int {
+	for i := 0; i < len(nums)-1; i++ {
+		// value at even index should be less than or equal next value
+		// value at odd index should be greater than or equal
+		if (i%2 == 0 && nums[i] > nums[i+1]) || (i%2 == 1 && nums[i] < nums[i+1]) {
+			nums[i], nums[i+1] = nums[i+1], nums[i]
+		}
+	}
+	return nums
+}
+
+// LC 324
+func WiggleSortII(nums []int) []int {
+	n := len(nums)
+	median := findKthLargest(nums, n/2)
+	// [0, 1, 2, 3, 4, 5] -> [1, 3, 5, 0, 2, 4]
+	mapIndex := func(idx int) int {
+		return (2*idx + 1) % (n | 1)
+	}
+	swap := func(i, j int) {
+		nums[i], nums[j] = nums[j], nums[i]
+	}
+	l, i, r := 0, 0, n-1
+	// M-S-L-S-L-M		  L----i--------------R
+	// Mapped idx:   1    3    5    0    2    4
+	// Array:        13   6   [5]   5    4    2
+	for i <= r {
+		if nums[mapIndex(i)] > median {
+			swap(mapIndex(i), mapIndex(l))
+			i++
+			l++
+		} else if nums[mapIndex(i)] < median {
+			swap(mapIndex(i), mapIndex(r))
+			r--
+		} else {
+			i++
+		}
+	}
+	return nums
+}
+
+// LC 217
+func GetStringEncoder() (func([]string) string, func(string) []string) {
+	encode := func(strs []string) string {
+		var sb strings.Builder
+		for _, s := range strs {
+			sb.WriteString(fmt.Sprint(len(s)))
+			sb.WriteByte('#')
+			sb.WriteString(s)
+		}
+		return sb.String()
+	}
+	decode := func(str string) []string {
+		i := 0
+		res := []string{}
+		for j := 0; j < len(str); j++ {
+			if str[j] == '#' {
+				n, _ := strconv.Atoi(str[i:j])
+				i = j + 1
+				j = i + n
+				res = append(res, str[i:j])
+				i = j
+			}
+		}
+		return res
+	}
+	return encode, decode
 }
 
 // LC 1189
