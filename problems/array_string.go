@@ -70,9 +70,10 @@ func WiggleSortII(nums []int) []int {
 		nums[i], nums[j] = nums[j], nums[i]
 	}
 	l, i, r := 0, 0, n-1
-	// M-S-L-S-L-M		  L----i--------------R
+	// M-L-S-L-S-M		  L----i--------------R
 	// Mapped idx:   1    3    5    0    2    4
 	// Array:        13   6   [5]   5    4    2
+	// Array:        13   6   [5]   5    2    4
 	for i <= r {
 		if nums[mapIndex(i)] > median {
 			swap(mapIndex(i), mapIndex(l))

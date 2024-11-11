@@ -4,6 +4,46 @@ import (
 	"slices"
 )
 
+// LC 252
+func CanAttendMeeting(intervals [][]int) bool {
+	slices.SortFunc(intervals, func(a, b []int) int {
+		return a[0] - b[0]
+	})
+	for i := 1; i < len(intervals); i++ {
+		prev := intervals[i-1]
+		cur := intervals[i]
+		// start < end
+		if cur[0] < prev[1] {
+			return false
+		}
+	}
+	return true
+}
+
+// LC 253
+func MinMeetingRooms(intervals [][]int) int {
+	starts := make([]int, len(intervals))
+	ends := make([]int, len(intervals))
+	for i, v := range intervals {
+		starts[i] = v[0]
+		ends[i] = v[1]
+	}
+	slices.Sort(starts)
+	slices.Sort(ends)
+	res, count := 0, 0
+	for i, j := 0, 0; i < len(intervals); {
+		if starts[i] < ends[j] {
+			i++
+			count++
+		} else {
+			j++
+			count--
+		}
+		res = max(res, count)
+	}
+	return res
+}
+
 // LC 56
 func MergeInterval(intervals [][]int) [][]int {
 	slices.SortFunc(intervals, func(a, b []int) int {

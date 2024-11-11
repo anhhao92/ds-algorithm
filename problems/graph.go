@@ -127,6 +127,65 @@ func NumBusesToDestination(routes [][]int, source int, target int) int {
 	return -1
 }
 
+// LC 261
+func isGraphValidTree(n int, edegs [][]int) bool {
+	adj := make([][]int, n)
+	visited := map[int]bool{}
+	for _, v := range edegs {
+		u, v := v[0], v[1]
+		adj[u] = append(adj[u], v)
+		adj[v] = append(adj[v], u)
+	}
+	// detect cycle and visited nodes
+	var dfs func(node, parent int) bool
+	dfs = func(node, parent int) bool {
+		if _, ok := visited[node]; ok {
+			return false
+		}
+		visited[node] = true
+		for _, neighbor := range adj[node] {
+			if parent == neighbor {
+				continue
+			}
+			if !dfs(neighbor, node) {
+				return false
+			}
+		}
+		return true
+	}
+	return dfs(0, -1) && len(visited) == n
+}
+
+// LC 323
+func countComponents(n int, edegs [][]int) int {
+	adj := make([][]int, n)
+	visited := map[int]bool{}
+	for _, v := range edegs {
+		u, v := v[0], v[1]
+		adj[u] = append(adj[u], v)
+		adj[v] = append(adj[v], u)
+	}
+	var dfs func(node int)
+	dfs = func(node int) {
+		for _, neighbor := range adj[node] {
+			if visited[neighbor] {
+				continue
+			}
+			visited[neighbor] = true
+			dfs(neighbor)
+		}
+	}
+	res := 0
+	for i := 0; i < n; i++ {
+		if !visited[i] {
+			visited[i] = true
+			dfs(i)
+			res++
+		}
+	}
+	return res
+}
+
 type UnionFind struct {
 	ranks           []int
 	parents         []int
@@ -783,6 +842,29 @@ func AlienDictionary(words []string) string {
 		return ""
 	}
 	return sb.String()
+	/*
+		visited := map[int]bool{} // [false: visited, true: current path has cycle]
+		// dfs postorder to detect cycle
+		func dfs(node byte) bool {
+			if val, ok := visited[node]; ok {
+				return val
+			}
+			visited[node] = true
+			for _,nei := range adj[node] {
+				if dfs(nei) {
+					return true
+				}
+			}
+			visited[node] = false
+			res = append(res, node) // reverse order
+			return false
+		}
+		for c := range adj {
+			if dfs(c) {
+				return ""
+			}
+		}
+	*/
 }
 
 // LC 2050
