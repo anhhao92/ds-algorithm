@@ -97,3 +97,23 @@ func EraseOverlapIntervals(intervals [][]int) int {
 	}
 	return count
 }
+
+// LC 1288
+func removeCoveredIntervals(intervals [][]int) int {
+	slices.SortFunc(intervals, func(a, b []int) int {
+		if a[0] == b[0] {
+			return b[1] - a[1]
+		}
+		return a[0] - b[0]
+	})
+	res := [][]int{intervals[0]}
+	for i := 1; i < len(intervals); i++ {
+		cur, prev := intervals[i], res[len(res)-1]
+		if prev[0] <= cur[0] && prev[1] >= cur[1] {
+			continue
+		}
+		res = append(res, cur)
+
+	}
+	return len(res)
+}

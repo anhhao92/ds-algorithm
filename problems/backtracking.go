@@ -1,6 +1,7 @@
 package problems
 
 import (
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -664,4 +665,54 @@ func maxScoreWords(words []string, letters []byte, score []int) int {
 	}
 	backtrack(0, [26]int{})
 	return res
+}
+
+// LC 2597
+func beautifulSubsets(nums []int, k int) int {
+	count := make(map[int]int)
+	for _, v := range nums {
+		count[v]++
+	}
+	visited := make(map[int]bool)
+	groups := make([]map[int]int, 0, 2)
+	for n := range count {
+		if _, ok := visited[n]; ok {
+			continue
+		}
+		g := make(map[int]int)
+		for count[n-k] != 0 {
+			n -= k
+		}
+		for count[n] != 0 {
+			g[n] = count[n]
+			visited[n] = true
+			n += k
+		}
+		groups = append(groups, g)
+	}
+	dp := make(map[int]int)
+	// house robber
+	var dfs func(num int, g map[int]int) int
+	dfs = func(num int, g map[int]int) int {
+		if g[num] == 0 {
+			return 1
+		}
+		if v, ok := dp[num]; ok {
+			return v
+		}
+		skip := dfs(num+k, g)
+		take := ((1 << g[num]) - 1) * dfs(num+2*k, g) // 2^k - 1 empty subset
+		dp[num] = skip + take
+		return skip + take
+	}
+
+	res := 1
+	for _, g := range groups {
+		num := math.MaxInt32
+		for n := range g {
+			num = min(num, n)
+		}
+		res *= dfs(num, g)
+	}
+	return res - 1
 }

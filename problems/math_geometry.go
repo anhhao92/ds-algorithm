@@ -435,3 +435,43 @@ func convertZigZag(s string, numRows int) string {
 	}
 	return sb.String()
 }
+
+// L 1727
+func largestSubmatrix(matrix [][]int) int {
+	rows, cols := len(matrix), len(matrix[0])
+	prev := make([]int, cols)
+	res := 0
+	for i := 0; i < rows; i++ {
+		heights := matrix[i]
+		for j := 0; j < cols; j++ {
+			if heights[j] > 0 {
+				heights[j] += prev[j]
+			}
+		}
+		h := slices.Clone(heights)
+		slices.SortFunc(h, func(a, b int) int { return b - a })
+		for r := 0; r < cols; r++ {
+			res = max(res, (r+1)*h[r])
+		}
+		prev = heights
+	}
+
+	return res
+}
+
+// LC 1041
+func isRobotBounded(instructions string) bool {
+	dirX, dirY := 0, 1
+	x, y := 0, 0
+	for _, d := range instructions {
+		if d == 'G' {
+			x, y = x+dirX, y+dirY
+		} else if d == 'L' {
+			dirX, dirY = -dirY, dirX
+		} else {
+			dirX, dirY = dirY, -dirX
+		}
+	}
+	// same postion or change direction
+	return (x == 0 && y == 0) || (dirX != 0 && dirY != 1)
+}

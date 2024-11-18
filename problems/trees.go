@@ -214,13 +214,10 @@ func InorderTraversal(root *TreeNode) []int {
 	res := []int{}
 	stack := []*TreeNode{}
 	current := root
-	for {
+	for current != nil || len(stack) > 0 {
 		for current != nil {
 			stack = append(stack, current)
 			current = current.Left
-		}
-		if len(stack) == 0 {
-			break
 		}
 		current = stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
