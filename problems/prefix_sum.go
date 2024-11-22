@@ -95,6 +95,28 @@ func SubarraySum(nums []int, k int) int {
 	return count
 }
 
+// LC 437
+func PathSum(root *TreeNode, targetSum int) int {
+	count := map[int]int{0: 1}
+	res := 0
+	var dfs func(root *TreeNode, sum int)
+	dfs = func(root *TreeNode, sum int) {
+		if root == nil {
+			return
+		}
+		sum += root.Val
+		if c, ok := count[sum-targetSum]; ok {
+			res += c
+		}
+		count[sum]++
+		dfs(root.Left, sum)
+		dfs(root.Right, sum)
+		count[sum]--
+	}
+	dfs(root, 0)
+	return res
+}
+
 // LC525
 func findMaxLength(nums []int) int {
 	psum, res := 0, 0

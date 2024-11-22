@@ -1166,3 +1166,18 @@ func (this *RandomizedSet) GetRandom() int {
 	i := rand.IntN(len(this.list))
 	return this.list[i]
 }
+
+// LC 3163
+func CompressedString(word string) string {
+	var sb strings.Builder
+	for i := 0; i < len(word); {
+		group := 1
+		for i+group < len(word) && group < 9 && word[i+group] == word[i] {
+			group++
+		}
+		sb.WriteByte(byte(group + '0'))
+		sb.WriteByte(word[i])
+		i += group
+	}
+	return sb.String()
+}
