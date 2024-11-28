@@ -277,34 +277,28 @@ func SolveSudoku(board [][]byte) {
 	backtrack()
 }
 
-type PartitionPalindrome struct {
-	s   string
-	ans [][]string
-}
-
-func NewPartitionPalindrome(s string) [][]string {
-	p := PartitionPalindrome{s: s, ans: [][]string{}}
-	p.dfsPartition(0, []string{})
-	return p.ans
-}
-
-func (p *PartitionPalindrome) dfsPartition(index int, rs []string) {
-	if index == len(p.s) {
-		p.ans = append(p.ans, slices.Clone(rs))
-		return
-	}
-	for i := index + 1; i <= len(p.s); i++ {
-		subStr := p.s[index:i]
-		if p.isPalindrome(subStr) {
-			rs = append(rs, subStr)
-			p.dfsPartition(i, rs)
-			rs = rs[:len(rs)-1]
+// LC 131
+func PartitionPalindrome(s string) [][]string {
+	res := [][]string{}
+	var dfs func(int, []string)
+	dfs = func(start int, rs []string) {
+		if start == len(s) {
+			res = append(res, slices.Clone(rs))
 		}
-
+		for i := start + 1; i <= len(s); i++ {
+			subStr := s[start:i]
+			if isPalindrome(subStr) {
+				rs = append(rs, subStr)
+				dfs(i, rs)
+				rs = rs[:len(rs)-1]
+			}
+		}
 	}
+	dfs(0, []string{})
+	return res
 }
 
-func (p *PartitionPalindrome) isPalindrome(s string) bool {
+func isPalindrome(s string) bool {
 	n := len(s)
 	for i := 0; i < n/2; i++ {
 		if s[i] != s[n-i-1] {
