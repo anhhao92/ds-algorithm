@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// LC 332
+// LC 332 Eulerian Path
 func FindItinerary(tickets [][]string) []string {
 	adj := make(map[string][]string)
 	ans := []string{}
@@ -41,6 +41,43 @@ func FindItinerary(tickets [][]string) []string {
 	// Reverse the answer to get the correct order
 	slices.Reverse(ans)
 	return ans
+}
+
+// LC 2097 Eulerian Path
+func ValidArrangement(pairs [][]int) [][]int {
+	adj := make(map[int][]int)
+	inOutDegree := make(map[int]int)
+	for _, p := range pairs {
+		start, end := p[0], p[1]
+		adj[start] = append(adj[start], end)
+		inOutDegree[end]--
+		inOutDegree[start]++
+	}
+	startNode := pairs[0][0]
+	for vertex, degree := range inOutDegree {
+		if degree == 1 {
+			startNode = vertex
+			break
+		}
+	}
+	stack := []int{startNode}
+	path := []int{}
+	for len(stack) > 0 {
+		node := stack[len(stack)-1]
+		if len(adj[node]) == 0 {
+			path = append(path, node)
+			stack = stack[:len(stack)-1]
+		} else {
+			next := adj[node][0]
+			adj[node] = adj[node][1:]
+			stack = append(stack, next)
+		}
+	}
+	edges := [][]int{}
+	for i := len(path) - 1; i > 0; i-- {
+		edges = append(edges, []int{path[i], path[i-1]})
+	}
+	return edges
 }
 
 // LC 463
@@ -182,104 +219,6 @@ func countComponents(n int, edegs [][]int) int {
 			dfs(i)
 			res++
 		}
-	}
-	return res
-}
-
-type UnionFind struct {
-	ranks           []int
-	parents         []int
-	numsOfComponent int
-}
-
-func NewUnionFind(n int) *UnionFind {
-	parents := make([]int, n)
-	ranks := make([]int, n)
-	for i := 0; i < n; i++ {
-		parents[i] = i
-		ranks[i] = 1
-	}
-	return &UnionFind{parents: parents, ranks: ranks, numsOfComponent: n}
-}
-
-func (u *UnionFind) Find(n int) int {
-	root := n
-	for root != u.parents[root] {
-		root = u.parents[root]
-	}
-	// Path compression
-	for n != root {
-		pre := u.parents[n]
-		u.parents[n] = root
-		n = pre
-	}
-	return root
-}
-
-func (u *UnionFind) Union(n1, n2 int) bool {
-	p1, p2 := u.Find(n1), u.Find(n2)
-	ranks, parents := u.ranks, u.parents
-	if p1 == p2 {
-		return false
-	}
-	if ranks[p1] > ranks[p2] {
-		parents[p2] = p1
-		ranks[p1] += ranks[p2]
-	} else {
-		parents[p1] = p2
-		ranks[p2] += ranks[p1]
-	}
-	u.numsOfComponent--
-	return true
-}
-
-// LC684
-func findRedundantConnection(edges [][]int) []int {
-	u := NewUnionFind(len(edges) + 1)
-	for _, e := range edges {
-		if !u.Union(e[0], e[1]) {
-			return e
-		}
-	}
-	return []int{}
-}
-
-func findCircleNum(isConnected [][]int) int {
-	u := NewUnionFind(len(isConnected))
-	for i := 0; i < len(isConnected); i++ {
-		for j := 0; j < len(isConnected[i]); j++ {
-			if i != j && isConnected[i][j] == 1 {
-				u.Union(i, j)
-			}
-		}
-	}
-	return u.numsOfComponent
-}
-
-// LC 721
-func accountsMerge(accounts [][]string) [][]string {
-	uf := NewUnionFind(len(accounts))
-	emailToAccount := map[string]int{}
-	for i, acc := range accounts {
-		for _, email := range acc[1:] {
-			if idx, ok := emailToAccount[email]; ok {
-				uf.Union(i, idx)
-			} else {
-				emailToAccount[email] = i
-			}
-		}
-	}
-	groups := map[int][]string{}
-	for k, v := range emailToAccount {
-		leader := uf.Find(v)
-		groups[leader] = append(groups[leader], k)
-	}
-	res := [][]string{}
-	for k := range groups {
-		name := accounts[k][0]
-		g := groups[k]
-		slices.Sort(g)
-		res = append(res, append([]string{name}, g...))
 	}
 	return res
 }
@@ -1378,37 +1317,6 @@ func numEnclaves(grid [][]int) int {
 		}
 	}
 	return land - borderLand
-}
-
-// LC 785
-func isBipartite(graph [][]int) bool {
-	odd := make([]int, len(graph))
-	bfs := func(n int) bool {
-		if odd[n] != 0 {
-			return true
-		}
-		queue := []int{n}
-		odd[n] = -1
-		for len(queue) > 0 {
-			n = queue[0]
-			queue = queue[1:]
-			for _, nei := range graph[n] {
-				if odd[nei] != 0 && odd[n] == odd[nei] {
-					return false
-				} else if odd[nei] == 0 {
-					queue = append(queue, nei)
-					odd[nei] = -1 * odd[n]
-				}
-			}
-		}
-		return true
-	}
-	for i := range graph {
-		if !bfs(i) {
-			return false
-		}
-	}
-	return true
 }
 
 // LC 399
